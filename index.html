@@ -706,49 +706,54 @@
     }
 
     function displayUserStats(data) {
-        document.getElementById('userStatsTitle').textContent = data.partner_id;
-        document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
-        document.getElementById('statsTotalCommission').textContent = data.stats.total_commission + ' ₽';
-        document.getElementById('statsTotalBonuses').textContent = data.stats.total_bonuses + ' ₽';
-        document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
+    // 1. Отобразить ID партнера
+    document.getElementById('statsPartnerIdDisplay').textContent = data.partner_id; // <<< Исправлено
 
-        // Заполняем таблицу сделок
-        const dealsBody = document.getElementById('userDealsBody');
-        dealsBody.innerHTML = '';
-        if (data.deals && data.deals.length > 0) {
-            data.deals.forEach(d => {
-                const row = dealsBody.insertRow();
-                row.insertCell(0).textContent = d.id;
-                row.insertCell(1).textContent = d.type;
-                row.insertCell(2).textContent = d.amount;
-                // Если API возвращает дату: row.insertCell(3).textContent = d.created_at или другое поле даты;
-            });
-        } else {
+    // 2. Заполнить карточки статистики
+    document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
+    document.getElementById('statsTotalCommission').textContent = data.stats.total_commission + ' ₽';
+    document.getElementById('statsTotalBonuses').textContent = data.stats.total_bonuses + ' ₽';
+    document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
+
+    // 3. Заполнить таблицу сделок партнера
+    const dealsBody = document.getElementById('userDealsBody');
+    dealsBody.innerHTML = '';
+    if (data.deals && data.deals.length > 0) {
+        data.deals.forEach(d => {
             const row = dealsBody.insertRow();
-            row.insertCell(0).setAttribute("colspan", 3); // Или 4, если дата есть
-            row.insertCell(0).textContent = "Нет данных";
-        }
-
-        // Заполняем таблицу бонусов
-        const bonusesBody = document.getElementById('userBonusesBody');
-        bonusesBody.innerHTML = '';
-        if (data.bonuses_received && data.bonuses_received.length > 0) {
-            data.bonuses_received.forEach(b => {
-                const row = bonusesBody.insertRow();
-                row.insertCell(0).textContent = b.deal_id;
-                row.insertCell(1).textContent = b.partner_id;
-                row.insertCell(2).textContent = b.level;
-                row.insertCell(3).textContent = b.bonus;
-            });
-        } else {
-            const row = bonusesBody.insertRow();
-            row.insertCell(0).setAttribute("colspan", 4);
-            row.insertCell(0).textContent = "Нет данных";
-        }
-
-        // Показываем секцию
-        document.getElementById('userStatsSection').style.display = 'block';
+            row.insertCell(0).textContent = d.id;
+            row.insertCell(1).textContent = d.type;
+            row.insertCell(2).textContent = d.amount;
+            // Если API возвращает дату: row.insertCell(3).textContent = d.created_at или другое поле даты;
+        });
+    } else {
+        const row = dealsBody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3; // Количество колонок в таблице
+        cell.textContent = "У партнера нет сделок.";
     }
+
+    // 4. Заполнить таблицу бонусов за рефералов
+    const bonusesBody = document.getElementById('userBonusesBody');
+    bonusesBody.innerHTML = '';
+    if (data.bonuses_received && data.bonuses_received.length > 0) {
+        data.bonuses_received.forEach(b => {
+            const row = bonusesBody.insertRow();
+            row.insertCell(0).textContent = b.deal_id;
+            row.insertCell(1).textContent = b.partner_id; // ID перекупа, за которого начислен бонус
+            row.insertCell(2).textContent = b.level;
+            row.insertCell(3).textContent = b.bonus;
+        });
+    } else {
+        const row = bonusesBody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 4; // Количество колонок в таблице
+        cell.textContent = "Партнер не получил бонусов за рефералов.";
+    }
+
+    // 5. Показать секцию со статистикой
+    document.getElementById('userStatsSection').style.display = 'block';
+}
     // --- КОНЕЦ НОВОГО ---
 
     function exportToCSV() {
