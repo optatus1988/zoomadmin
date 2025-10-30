@@ -214,40 +214,40 @@
         return id.trim() !== '';
     }
 
-    async function addPartner() {
-        const id = document.getElementById('newPartnerId').value;
-        const name = document.getElementById('newPartnerName').value;
-        const referrer = document.getElementById('newPartnerReferrer').value || null;
-        const telegram = document.getElementById('newPartnerTelegram').value || null;
+   async function addPartner() {
+    const id = document.getElementById('newPartnerId').value;
+    const name = document.getElementById('newPartnerName').value;
+    const referrer = document.getElementById('newPartnerReferrer').value || null;
+    const telegram = document.getElementById('newPartnerTelegram').value || null;
 
-        if (!id || !name) {
-            alert('Заполните ID и Имя');
-            return;
-        }
-
-        const exists = await checkPartnerExists(id);
-        if (exists) {
-            alert('Перекуп с таким ID уже существует');
-            return;
-        }
-
-        const response = await fetch(`${API_URL}/partner`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, name, referrer, telegram })
-        });
-
-        if (response.ok) {
-            alert('Перекуп добавлен');
-            document.getElementById('newPartnerId').value = '';
-            document.getElementById('newPartnerName').value = '';
-            document.getElementById('newPartnerReferrer').value = '';
-            document.getElementById('newPartnerTelegram').value = '';
-        } else {
-            const errorText = await response.text();
-            alert('Ошибка при добавлении перекупа: ' + errorText);
-        }
+    if (!id || !name) {
+        alert('Заполните ID и Имя');
+        return;
     }
+
+    const exists = await checkPartnerExists(id);
+    if (exists) {
+        alert('Перекуп с таким ID уже существует');
+        return;
+    }
+
+    const response = await fetch(`${API_URL}/partner`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, name, referrer_id: referrer, telegram_id: telegram }) // ✅ Исправлено
+    });
+
+    if (response.ok) {
+        alert('Перекуп добавлен');
+        document.getElementById('newPartnerId').value = '';
+        document.getElementById('newPartnerName').value = '';
+        document.getElementById('newPartnerReferrer').value = '';
+        document.getElementById('newPartnerTelegram').value = '';
+    } else {
+        const errorText = await response.text();
+        alert('Ошибка при добавлении перекупа: ' + errorText);
+    }
+}
 
     async function addDeal() {
         const id = document.getElementById('newDealId').value;
