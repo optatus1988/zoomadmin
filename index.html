@@ -468,17 +468,9 @@
         }
 
         // Попробуем найти ID по имени, если введено имя
-        let referrerId = referrerInput;
-        if (referrerInput && !referrerInput.startsWith('P') && !referrerInput.startsWith('T')) { // Простая проверка, что это не ID
-             // Нормализуем введённое имя: убираем пробелы и приводим к нижнему регистру
-             const normalizedInput = referrerInput.trim().toLowerCase();
-             const foundPartner = partnersList.find(p =>
-                 p.name && p.name.trim().toLowerCase() === normalizedInput
-             );
-             if (foundPartner) {
-                 referrerId = foundPartner.id;
-             }
-        }
+         // Отправляем введённое значение как partner_id.
+        // API сам проверит, существует ли партнёр.
+        let partnerId = partnerInput;
 
         const exists = await checkPartnerExists(id);
         if (exists) {
