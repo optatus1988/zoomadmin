@@ -226,32 +226,49 @@
         }
     }
 
-    async function addDeal() {
-        const id = document.getElementById('newDealId').value;
-        const partner = document.getElementById('newDealPartner').value;
-        const type = document.getElementById('newDealType').value;
-        const amount = parseFloat(document.getElementById('newDealAmount').value);
+   async function addDeal() {
+    const id = document.getElementById('newDealId').value;
+    const partner = document.getElementById('newDealPartner').value;
+    const type = document.getElementById('newDealType').value;
+    const amount = parseFloat(document.getElementById('newDealAmount').value);
 
-        if (!id || !partner || isNaN(amount)) {
-            alert('Заполните все поля сделки');
-            return;
-        }
-
-        const response = await fetch(`${API_URL}/deal`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, partner, type, amount })
-        });
-
-        if (response.ok) {
-            alert('Сделка добавлена');
-            document.getElementById('newDealId').value = '';
-            document.getElementById('newDealPartner').value = '';
-            document.getElementById('newDealAmount').value = '';
-        } else {
-            alert('Ошибка при добавлении сделки');
-        }
+    if (!id || !partner || isNaN(amount)) {
+        alert('Заполните все поля сделки');
+        return;
     }
+
+    // Убедимся, что тип и amount — правильного формата
+    const dealData = {
+        id: id,
+        partner_id: partner,
+        type: type,
+        amount: amount
+    };
+
+    console.log("Отправляем на API:", dealData); // Отладка
+
+    const response = await fetch(`${API_URL}/deal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dealData)
+    });
+
+    console.log("Ответ от API:", response.status); // Отладка
+
+    if (response.ok) {
+        alert('Сделка добавлена');
+        document.getElementById('newDealId').value = '';
+        document.getElementById('newDealPartner').value = '';
+        document.getElementById('newDealAmount').value = '';
+        // Обновляем таблицы
+        loadBonuses();
+        loadPayouts();
+    } else {
+        const errorText = await response.text();
+        console.error("Ошибка API:", errorText);
+        alert('Ошибка при добавлении сделки: ' + errorText);
+    }
+}
 
     async function loadBonuses() {
         // В реальной системе: запрос к API для получения бонусов
