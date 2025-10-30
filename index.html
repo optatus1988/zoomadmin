@@ -27,63 +27,6 @@
             color: var(--dark);
             padding: 20px;
             min-height: 100vh;
-            display: none; /* Скрыто до аутентификации */
-        }
-
-        /* Стили для экрана логина */
-        #login-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            height: 100vh;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-        }
-
-        #login-form {
-            background: white;
-            padding: 30px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            width: 100%;
-            max-width: 400px;
-        }
-
-        #login-form h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: var(--primary);
-        }
-
-        #login-form input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #ced4da;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-        }
-
-        #login-form button {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            border-radius: var(--border-radius);
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        #login-form button:hover {
-            opacity: 0.9;
-        }
-
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-top: 10px;
         }
 
         .container {
@@ -216,17 +159,7 @@
 </head>
 <body>
 
-<div id="login-screen">
-    <div id="login-form">
-        <h2>Доступ к админ-панели</h2>
-        <input type="text" id="admin-user" placeholder="Логин">
-        <input type="password" id="admin-pass" placeholder="Пароль">
-        <button onclick="checkLogin()">Войти</button>
-        <div id="error-message" class="error-message"></div>
-    </div>
-</div>
-
-<div class="container" id="main-content" style="display: none;">
+<div class="container">
     <header>
         <img src="https://placehold.co/200x50?text=ZOOM+AUTO" alt="Zoom Auto">
         <h1>🚀 Админ-панель | Zoom Auto Уфа</h1>
@@ -299,42 +232,8 @@
     // ЗАМЕНИТЕ НА ВАШ URL С VERCHEL
     const API_URL = 'https://referralapi.vercel.app';
 
-    // Установите здесь ваш логин и пароль
-    const ADMIN_USER = 'zoomadmin'; // Замените на ваш логин
-    const ADMIN_PASS = 'supersecret123'; // Замените на ваш пароль
-
     // Глобальная переменная для хранения списка перекупов
     let partnersList = [];
-
-    function checkLogin() {
-        const inputUser = document.getElementById('admin-user').value;
-        const inputPass = document.getElementById('admin-pass').value;
-        const errorMessage = document.getElementById('error-message');
-
-        if (inputUser === ADMIN_USER && inputPass === ADMIN_PASS) {
-            sessionStorage.setItem('adminLoggedIn', 'true');
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            loadPartners(); // Загружаем список перекупов для автодополнения
-            loadBonuses();
-            loadPayouts();
-        } else {
-            errorMessage.textContent = 'Неверный логин или пароль';
-        }
-    }
-
-    window.onload = function() {
-        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
-            loadPartners(); // Загружаем список перекупов для автодополнения
-            loadBonuses();
-            loadPayouts();
-        } else {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('main-content').style.display = 'none';
-        }
-    }
 
     // --- Функции для автодополнения ---
     function autocomplete(inp, arr) {
@@ -632,6 +531,11 @@
     function exportToCSV() {
         alert('Экспорт в CSV будет реализован позже через API.');
     }
+
+    // Загрузка при открытии страницы
+    loadPartners();
+    loadBonuses();
+    loadPayouts();
 </script>
 
 </body>
