@@ -27,6 +27,63 @@
             color: var(--dark);
             padding: 20px;
             min-height: 100vh;
+            display: none; /* Скрыто до аутентификации */
+        }
+
+        /* Стили для экрана логина */
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+        }
+
+        #login-form {
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        #login-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        #login-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        #login-form button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #login-form button:hover {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
         }
 
         .container {
@@ -159,7 +216,17 @@
 </head>
 <body>
 
-<div class="container">
+<div id="login-screen">
+    <div id="login-form">
+        <h2>Доступ к админ-панели</h2>
+        <input type="text" id="admin-user" placeholder="Логин">
+        <input type="password" id="admin-pass" placeholder="Пароль">
+        <button onclick="login()">Войти</button>
+        <div id="error-message" class="error-message"></div>
+    </div>
+</div>
+
+<div class="container" id="main-content" style="display: none;">
     <header>
         <img src="https://placehold.co/200x50?text=ZOOM+AUTO" alt="Zoom Auto">
         <h1>🚀 Админ-панель | Zoom Auto Уфа</h1>
@@ -232,8 +299,93 @@
     // ЗАМЕНИТЕ НА ВАШ URL С VERCHEL
     const API_URL = 'https://referralapi.vercel.app';
 
-    // Глобальная переменная для хранения списка перекупов
-    let partnersList = [];
+    // Глобальная переменная для хранения токена
+    let authToken = sessionStorage.getItem('authToken');
+
+    // Функция для выполнения запросов с авторизацией
+    async function apiCall(url, options = {}) {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+
+        if (response.status === 401) {
+            // Если токен просрочен или невалиден
+            sessionStorage.removeItem('authToken');
+            authToken = null;
+            alert('Сессия истекла. Пожалуйста, войдите снова.');
+            showLoginScreen();
+            return null;
+        }
+
+        return response;
+    }
+
+    function showLoginScreen() {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('main-content').style.display = 'none';
+    }
+
+    function showMainContent() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+    }
+
+    async function login() {
+        const username = document.getElementById('admin-user').value;
+        const password = document.getElementById('admin-pass').value;
+        const errorMessage = document.getElementById('error-message');
+
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            authToken = data.access_token;
+            sessionStorage.setItem('authToken', authToken);
+            showMainContent();
+            loadPartners();
+            loadBonuses();
+            loadPayouts();
+        } else {
+            const errorData = await response.json();
+            errorMessage.textContent = errorData.detail || 'Неверный логин или пароль';
+        }
+    }
+
+    window.onload = function() {
+        if (authToken) {
+            // Проверим валидность токена, сделав тестовый запрос
+            apiCall(`${API_URL}/`).then(response => {
+                if (response && response.ok) {
+                    showMainContent();
+                    loadPartners();
+                    loadBonuses();
+                    loadPayouts();
+                } else {
+                    // Если токен невалиден, показать логин
+                    showLoginScreen();
+                }
+            }).catch(() => {
+                // Если ошибка сети или токен невалиден
+                showLoginScreen();
+            });
+        } else {
+            showLoginScreen();
+        }
+    }
 
     // --- Функции для автодополнения ---
     function autocomplete(inp, arr) {
@@ -302,32 +454,26 @@
         });
     }
 
+    // --- Код для работы с API ---
     async function loadPartners() {
-        try {
-            const response = await fetch(`${API_URL}/partner`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            // Создаём список ID и Имён
-            partnersList = data.map(p => p.id).concat(data.map(p => p.name));
-            // Инициализируем автодополнение для полей
-            autocomplete(document.getElementById("newDealPartner"), partnersList);
-            autocomplete(document.getElementById("newPartnerReferrer"), partnersList);
-        } catch (e) {
-            console.error("loadPartners: ошибка", e);
+        const response = await apiCall(`${API_URL}/partner`);
+        if (!response) return; // Если токен просрочен
+        if (!response.ok) {
+            console.error("loadPartners: ошибка", response.status);
+            return;
         }
+        const data = await response.json();
+        // Создаём список ID и Имён
+        partnersList = data.map(p => p.id).concat(data.map(p => p.name));
+        // Инициализируем автодополнение для полей
+        autocomplete(document.getElementById("newDealPartner"), partnersList);
+        autocomplete(document.getElementById("newPartnerReferrer"), partnersList);
     }
 
-    // --- Код для работы с API ---
     async function checkPartnerExists(id) {
-        try {
-            const response = await fetch(`${API_URL}/partner/${id}`);
-            return response.status !== 404;
-        } catch (e) {
-            console.error("Ошибка проверки партнёра:", e);
-            return false;
-        }
+        const response = await apiCall(`${API_URL}/partner/${id}`);
+        if (!response) return false; // Если токен просрочен
+        return response.status !== 404;
     }
 
     async function checkDealExists(id) {
@@ -361,11 +507,12 @@
             return;
         }
 
-        const response = await fetch(`${API_URL}/partner`, {
+        const response = await apiCall(`${API_URL}/partner`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, name, referrer_id: referrerId, telegram_id: telegram })
         });
+
+        if (!response) return; // Если токен просрочен
 
         if (response.ok) {
             alert('Перекуп добавлен');
@@ -425,11 +572,12 @@
 
         console.log("Отправляем на API:", dealData);
 
-        const response = await fetch(`${API_URL}/deal`, {
+        const response = await apiCall(`${API_URL}/deal`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dealData)
         });
+
+        if (!response) return; // Если токен просрочен
 
         console.log("Ответ от API:", response.status);
 
@@ -457,40 +605,36 @@
         const tbody = document.getElementById('bonusesBody');
         tbody.innerHTML = '<tr><td colspan="7">Загрузка...</td></tr>'; // 7 колонок теперь
 
-        try {
-            console.log("loadBonuses: отправляем запрос...");
-            const response = await fetch(`${API_URL}/bonuses`);
-            console.log("loadBonuses: ответ получен, статус:", response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log("loadBonuses: данные получены:", data);
-
-            tbody.innerHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(b => {
-                    const row = tbody.insertRow();
-                    row.insertCell(0).textContent = b.deal_id;
-                    row.insertCell(1).textContent = b.partner_id;
-                    row.insertCell(2).textContent = b.referrer_id;
-                    row.insertCell(3).textContent = b.level;
-                    row.insertCell(4).textContent = b.type;
-                    row.insertCell(5).textContent = b.bonus;
-                    // Пока дата берётся из даты расчёта/добавления, т.к. API не возвращает дату сделки
-                    // Если API будет возвращать дату сделки (например, b.deal_date), используйте её
-                    row.insertCell(6).textContent = new Date().toLocaleDateString(); // Заглушка
-                });
-            } else {
-                const row = tbody.insertRow();
-                row.insertCell(0).setAttribute("colspan", 7); // 7 колонок
-                row.insertCell(0).textContent = "Нет данных";
-            }
-            console.log("loadBonuses: таблица обновлена");
-        } catch (e) {
-            console.error("loadBonuses: ошибка", e);
+        const response = await apiCall(`${API_URL}/bonuses`);
+        if (!response) return; // Если токен просрочен
+        if (!response.ok) {
+            console.error("loadBonuses: ошибка", response.status);
             tbody.innerHTML = '<tr><td colspan="7">Ошибка загрузки</td></tr>'; // 7 колонок
+            return;
         }
+        const data = await response.json();
+        console.log("loadBonuses: данные получены:", data);
+
+        tbody.innerHTML = '';
+        if (data && data.length > 0) {
+            data.forEach(b => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = b.deal_id;
+                row.insertCell(1).textContent = b.partner_id;
+                row.insertCell(2).textContent = b.referrer_id;
+                row.insertCell(3).textContent = b.level;
+                row.insertCell(4).textContent = b.type;
+                row.insertCell(5).textContent = b.bonus;
+                // Пока дата берётся из даты расчёта/добавления, т.к. API не возвращает дату сделки
+                // Если API будет возвращать дату сделки (например, b.deal_date), используйте её
+                row.insertCell(6).textContent = new Date().toLocaleDateString(); // Заглушка
+            });
+        } else {
+            const row = tbody.insertRow();
+            row.insertCell(0).setAttribute("colspan", 7); // 7 колонок
+            row.insertCell(0).textContent = "Нет данных";
+        }
+        console.log("loadBonuses: таблица обновлена");
     }
 
     async function loadPayouts() {
@@ -498,44 +642,35 @@
         const tbody = document.getElementById('payoutsBody');
         tbody.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
 
-        try {
-            console.log("loadPayouts: отправляем запрос...");
-            const response = await fetch(`${API_URL}/payouts`);
-            console.log("loadPayouts: ответ получен, статус:", response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log("loadPayouts: данные получены:", data);
-
-            tbody.innerHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(p => {
-                    const row = tbody.insertRow();
-                    row.insertCell(0).textContent = p.id;
-                    row.insertCell(1).textContent = p.name;
-                    row.insertCell(2).textContent = p.total;
-                });
-            } else {
-                const row = tbody.insertRow();
-                row.insertCell(0).setAttribute("colspan", 3);
-                row.insertCell(0).textContent = "Нет данных";
-            }
-            console.log("loadPayouts: таблица обновлена");
-        } catch (e) {
-            console.error("loadPayouts: ошибка", e);
+        const response = await apiCall(`${API_URL}/payouts`);
+        if (!response) return; // Если токен просрочен
+        if (!response.ok) {
+            console.error("loadPayouts: ошибка", response.status);
             tbody.innerHTML = '<tr><td colspan="3">Ошибка загрузки</td></tr>';
+            return;
         }
+        const data = await response.json();
+        console.log("loadPayouts: данные получены:", data);
+
+        tbody.innerHTML = '';
+        if (data && data.length > 0) {
+            data.forEach(p => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = p.id;
+                row.insertCell(1).textContent = p.name;
+                row.insertCell(2).textContent = p.total;
+            });
+        } else {
+            const row = tbody.insertRow();
+            row.insertCell(0).setAttribute("colspan", 3);
+            row.insertCell(0).textContent = "Нет данных";
+        }
+        console.log("loadPayouts: таблица обновлена");
     }
 
     function exportToCSV() {
         alert('Экспорт в CSV будет реализован позже через API.');
     }
-
-    // Загрузка при открытии страницы
-    loadPartners();
-    loadBonuses();
-    loadPayouts();
 </script>
 
 </body>
