@@ -133,7 +133,7 @@
 
 <div class="container">
     <header>
-        <img src="https://via.placeholder.com/200x50?text=ZOOM+AUTO" alt="Zoom Auto">
+        <img src="https://placehold.co/200x50?text=ZOOM+AUTO" alt="Zoom Auto">
         <h1>🚀 Админ-панель | Zoom Auto Уфа</h1>
         <p>Управление перекупами, сделками и бонусами</p>
     </header>
@@ -198,6 +198,22 @@
     // ЗАМЕНИТЕ НА ВАШ URL С VERCHEL
     const API_URL = 'https://referralapi.vercel.app';
 
+    async function checkPartnerExists(id) {
+        try {
+            const response = await fetch(`${API_URL}/partner/${id}`);
+            return response.status !== 404;
+        } catch (e) {
+            console.error("Ошибка проверки партнёра:", e);
+            return false;
+        }
+    }
+
+    async function checkDealExists(id) {
+        // API пока не предоставляет маршрут для проверки сделки по ID
+        // Поэтому просто проверим, не пустой ли ID
+        return id.trim() !== '';
+    }
+
     async function addPartner() {
         const id = document.getElementById('newPartnerId').value;
         const name = document.getElementById('newPartnerName').value;
@@ -206,6 +222,12 @@
 
         if (!id || !name) {
             alert('Заполните ID и Имя');
+            return;
+        }
+
+        const exists = await checkPartnerExists(id);
+        if (exists) {
+            alert('Перекуп с таким ID уже существует');
             return;
         }
 
@@ -222,70 +244,140 @@
             document.getElementById('newPartnerReferrer').value = '';
             document.getElementById('newPartnerTelegram').value = '';
         } else {
-            alert('Ошибка при добавлении перекупа');
+            const errorText = await response.text();
+            alert('Ошибка при добавлении перекупа: ' + errorText);
         }
     }
 
-   async function addDeal() {
-    const id = document.getElementById('newDealId').value;
-    const partner = document.getElementById('newDealPartner').value;
-    const type = document.getElementById('newDealType').value;
-    const amount = parseFloat(document.getElementById('newDealAmount').value);
+    async function addDeal() {
+        const id = document.getElementById('newDealId').value;
+        const partner = document.getElementById('newDealPartner').value;
+        const type = document.getElementById('newDealType').value;
+        const amount = parseFloat(document.getElementById('newDealAmount').value);
 
-    if (!id || !partner || isNaN(amount)) {
-        alert('Заполните все поля сделки');
-        return;
+        if (!id || !partner || isNaN(amount)) {
+            alert('Заполните все поля сделки');
+            return;
+        }
+
+        const exists = await checkDealExists(id);
+        if (!exists) {
+            alert('Некорректный ID сделки');
+            return;
+        }
+
+        const dealData = {
+            id: id,
+            partner_id: partner,
+            type: type,
+            amount: amount
+        };
+
+        console.log("Отправляем на API:", dealData);
+
+        const response = await fetch(`${API_URL}/deal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dealData)
+        });
+
+        console.log("Ответ от API:", response.status);
+
+        if (response.ok) {
+            alert('Сделка добавлена');
+            document.getElementById('newDealId').value = '';
+            document.getElementById('newDealPartner').value = '';
+            document.getElementById('newDealAmount').value = '';
+
+            console.log("Вызов loadBonuses...");
+            await loadBonuses();
+            console.log("Вызов loadPayouts...");
+            await loadPayouts();
+            console.log("Таблицы обновлены.");
+        } else {
+            const errorText = await response.text();
+            console.error("Ошибка API:", errorText);
+            alert('Ошибка при добавлении сделки: ' + errorText);
+        }
     }
-
-    // Убедимся, что тип и amount — правильного формата
-    const dealData = {
-        id: id,
-        partner_id: partner,
-        type: type,
-        amount: amount
-    };
-
-    console.log("Отправляем на API:", dealData); // Отладка
-
-    const response = await fetch(`${API_URL}/deal`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dealData)
-    });
-
-    console.log("Ответ от API:", response.status); // Отладка
-
-    if (response.ok) {
-        alert('Сделка добавлена');
-        document.getElementById('newDealId').value = '';
-        document.getElementById('newDealPartner').value = '';
-        document.getElementById('newDealAmount').value = '';
-        // Обновляем таблицы
-        loadBonuses();
-        loadPayouts();
-    } else {
-        const errorText = await response.text();
-        console.error("Ошибка API:", errorText);
-        alert('Ошибка при добавлении сделки: ' + errorText);
-    }
-}
 
     async function loadBonuses() {
-        // В реальной системе: запрос к API для получения бонусов
-        // Сейчас: заглушка
+        console.log("loadBonuses: начало");
         const tbody = document.getElementById('bonusesBody');
-        tbody.innerHTML = '<tr><td colspan="6">Данные загружаются...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6">Загрузка...</td></tr>';
+
+        try {
+            console.log("loadBonuses: отправляем запрос...");
+            const response = await fetch(`${API_URL}/bonuses`);
+            console.log("loadBonuses: ответ получен, статус:", response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("loadBonuses: данные получены:", data);
+
+            tbody.innerHTML = '';
+            if (data && data.length > 0) {
+                data.forEach(b => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = b.deal_id;
+                    row.insertCell(1).textContent = b.partner_id;
+                    row.insertCell(2).textContent = b.referrer_id;
+                    row.insertCell(3).textContent = b.level;
+                    row.insertCell(4).textContent = b.type;
+                    row.insertCell(5).textContent = b.bonus;
+                });
+            } else {
+                const row = tbody.insertRow();
+                row.insertCell(0).setAttribute("colspan", 6);
+                row.insertCell(0).textContent = "Нет данных";
+            }
+            console.log("loadBonuses: таблица обновлена");
+        } catch (e) {
+            console.error("loadBonuses: ошибка", e);
+            tbody.innerHTML = '<tr><td colspan="6">Ошибка загрузки</td></tr>';
+        }
     }
 
     async function loadPayouts() {
-        // В реальной системе: запрос к API для получения выплат
-        // Сейчас: заглушка
+        console.log("loadPayouts: начало");
         const tbody = document.getElementById('payoutsBody');
-        tbody.innerHTML = '<tr><td colspan="3">Данные загружаются...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
+
+        try {
+            console.log("loadPayouts: отправляем запрос...");
+            const response = await fetch(`${API_URL}/payouts`);
+            console.log("loadPayouts: ответ получен, статус:", response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("loadPayouts: данные получены:", data);
+
+            tbody.innerHTML = '';
+            if (data && data.length > 0) {
+                data.forEach(p => {
+                    const row = tbody.insertRow();
+                    row.insertCell(0).textContent = p.id;
+                    row.insertCell(1).textContent = p.name;
+                    row.insertCell(2).textContent = p.total;
+                });
+            } else {
+                const row = tbody.insertRow();
+                row.insertCell(0).setAttribute("colspan", 3);
+                row.insertCell(0).textContent = "Нет данных";
+            }
+            console.log("loadPayouts: таблица обновлена");
+        } catch (e) {
+            console.error("loadPayouts: ошибка", e);
+            tbody.innerHTML = '<tr><td colspan="3">Ошибка загрузки</td></tr>';
+        }
     }
 
     // Загрузка при открытии страницы
+    console.log("Загрузка бонусов...");
     loadBonuses();
+    console.log("Загрузка выплат...");
     loadPayouts();
 
     function exportToCSV() {
