@@ -211,7 +211,7 @@
 
     <div class="form-group">
         <label>Добавить перекупа</label>
-        <input type="text" id="newPartnerId" placeholder="ID перекупа (P001)">
+        <input type="text" id="newPartnerId" placeholder="ID перекупа (например, P001 или 89003045231)">
         <input type="text" id="newPartnerName" placeholder="Имя">
         <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
             <input type="text" id="newPartnerReferrer" placeholder="Привлечён кем (ID или Имя)">
@@ -222,9 +222,9 @@
 
     <div class="form-group">
         <label>Добавить сделку</label>
-        <input type="text" id="newDealId" placeholder="ID сделки (S1001)">
+        <input type="text" id="newDealId" placeholder="ID сделки (например, S1001 или Deal_123)">
         <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
-            <input type="text" id="newDealPartner" placeholder="ID перекупа (ID или Имя)">
+            <input type="text" id="newDealPartner" placeholder="ID перекупа (например, P001 или 89003045231)">
         </div>
         <select id="newDealType">
             <option value="Продажа">Продажа</option>
@@ -459,7 +459,7 @@
         const id = document.getElementById('newPartnerId').value;
         const name = document.getElementById('newPartnerName').value;
         // Для реферера используем значение из автодополнения
-        const referrerInput = document.getElementById('newPartnerReferrer').value || null;
+        const referrerInput = document.getElementById('newPartnerReferrer').value || null; // <<< Исправлено: referrerInput
         const telegram = document.getElementById('newPartnerTelegram').value || null;
 
         if (!id || !name) {
@@ -467,10 +467,9 @@
             return;
         }
 
-        // Попробуем найти ID по имени, если введено имя
-         // Отправляем введённое значение как partner_id.
+        // Отправляем введённое значение как referrer_id.
         // API сам проверит, существует ли партнёр.
-        let partnerId = partnerInput;
+        let referrerId = referrerInput; // <<< Исправлено: referrerId
 
         const exists = await checkPartnerExists(id);
         if (exists) {
@@ -526,21 +525,9 @@
             return;
         }
 
-        // Найдём ID партнёра по введённому значению (ID или Имя)
+        // Отправляем введённое значение как partner_id.
+        // API сам проверит, существует ли партнёр.
         let partnerId = partnerInput;
-        if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
-             // Нормализуем введённое имя: убираем пробелы и приводим к нижнему регистру
-             const normalizedInput = partnerInput.trim().toLowerCase();
-             const foundPartner = partnersList.find(p =>
-                 p.name && p.name.trim().toLowerCase() === normalizedInput
-             );
-             if (foundPartner) {
-                 partnerId = foundPartner.id;
-             } else {
-                 alert('Перекуп с таким именем не найден');
-                 return;
-             }
-        }
 
         const exists = await checkDealExists(id);
         if (!exists) {
