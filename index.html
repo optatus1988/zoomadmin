@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель | Zoom Auto Уфа</title>
+    <style>
+        :root {
+            --primary: #d00000;
+            --secondary: #000000;
+            --accent: #ffffff;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --border-radius: 12px;
+            --box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        header img {
+            height: 50px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        button {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .export-section {
+            margin-top: 20px;
+        }
+
+        .export-btn {
+            background: var(--info);
+            width: auto;
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <img src="https://via.placeholder.com/200x50?text=ZOOM+AUTO" alt="Zoom Auto">
+        <h1>🚀 Админ-панель | Zoom Auto Уфа</h1>
+        <p>Управление перекупами, сделками и бонусами</p>
+    </header>
+
+    <div class="form-group">
+        <label>Добавить перекупа</label>
+        <input type="text" id="newPartnerId" placeholder="ID перекупа (P001)">
+        <input type="text" id="newPartnerName" placeholder="Имя">
+        <input type="text" id="newPartnerReferrer" placeholder="Привлечён кем (ID)">
+        <input type="text" id="newPartnerTelegram" placeholder="Telegram ID (опционально)">
+        <button onclick="addPartner()">Добавить перекупа</button>
+    </div>
+
+    <div class="form-group">
+        <label>Добавить сделку</label>
+        <input type="text" id="newDealId" placeholder="ID сделки (S1001)">
+        <input type="text" id="newDealPartner" placeholder="ID перекупа">
+        <select id="newDealType">
+            <option value="Продажа">Продажа</option>
+            <option value="Кредит">Кредит</option>
+        </select>
+        <input type="number" id="newDealAmount" placeholder="Комиссия (₽)">
+        <button onclick="addDeal()">Добавить сделку</button>
+    </div>
+
+    <h3>💰 Бонусы</h3>
+    <table id="bonusesTable">
+        <thead>
+            <tr>
+                <th>ID сделки</th>
+                <th>ID перекупа</th>
+                <th>ID реферера</th>
+                <th>Уровень</th>
+                <th>Тип</th>
+                <th>Бонус (₽)</th>
+            </tr>
+        </thead>
+        <tbody id="bonusesBody">
+        </tbody>
+    </table>
+
+    <h3>💳 Выплаты</h3>
+    <table id="payoutsTable">
+        <thead>
+            <tr>
+                <th>ID перекупа</th>
+                <th>Имя</th>
+                <th>Сумма (₽)</th>
+            </tr>
+        </thead>
+        <tbody id="payoutsBody">
+        </tbody>
+    </table>
+
+    <div class="export-section">
+        <h3>📤 Экспорт данных</h3>
+        <button class="export-btn" onclick="exportToCSV()">Экспорт в CSV</button>
+    </div>
+</div>
+
+<script>
+    // ЗАМЕНИТЕ НА ВАШ URL С VERCHEL
+    const API_URL = 'https://ваш-проект.vercel.app';
+
+    async function addPartner() {
+        const id = document.getElementById('newPartnerId').value;
+        const name = document.getElementById('newPartnerName').value;
+        const referrer = document.getElementById('newPartnerReferrer').value || null;
+        const telegram = document.getElementById('newPartnerTelegram').value || null;
+
+        if (!id || !name) {
+            alert('Заполните ID и Имя');
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/partner`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, name, referrer, telegram })
+        });
+
+        if (response.ok) {
+            alert('Перекуп добавлен');
+            document.getElementById('newPartnerId').value = '';
+            document.getElementById('newPartnerName').value = '';
+            document.getElementById('newPartnerReferrer').value = '';
+            document.getElementById('newPartnerTelegram').value = '';
+        } else {
+            alert('Ошибка при добавлении перекупа');
+        }
+    }
+
+    async function addDeal() {
+        const id = document.getElementById('newDealId').value;
+        const partner = document.getElementById('newDealPartner').value;
+        const type = document.getElementById('newDealType').value;
+        const amount = parseFloat(document.getElementById('newDealAmount').value);
+
+        if (!id || !partner || isNaN(amount)) {
+            alert('Заполните все поля сделки');
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/deal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, partner, type, amount })
+        });
+
+        if (response.ok) {
+            alert('Сделка добавлена');
+            document.getElementById('newDealId').value = '';
+            document.getElementById('newDealPartner').value = '';
+            document.getElementById('newDealAmount').value = '';
+        } else {
+            alert('Ошибка при добавлении сделки');
+        }
+    }
+
+    async function loadBonuses() {
+        // В реальной системе: запрос к API для получения бонусов
+        // Сейчас: заглушка
+        const tbody = document.getElementById('bonusesBody');
+        tbody.innerHTML = '<tr><td colspan="6">Данные загружаются...</td></tr>';
+    }
+
+    async function loadPayouts() {
+        // В реальной системе: запрос к API для получения выплат
+        // Сейчас: заглушка
+        const tbody = document.getElementById('payoutsBody');
+        tbody.innerHTML = '<tr><td colspan="3">Данные загружаются...</td></tr>';
+    }
+
+    // Загрузка при открытии страницы
+    loadBonuses();
+    loadPayouts();
+
+    function exportToCSV() {
+        alert('Экспорт в CSV будет реализован позже через API.');
+    }
+</script>
+
+</body>
+</html>
