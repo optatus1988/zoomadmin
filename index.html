@@ -389,7 +389,7 @@
         });
     }
 
-    // --- Код для работы с API ---
+    // --- Код для работы с API (БЕЗ аутентификации) ---
     async function checkPartnerExists(id) {
         try {
             const response = await fetch(`${API_URL}/partner/${id}`);
@@ -598,7 +598,7 @@
         }
     }
 
-    // --- НОВОЕ: Функции для статистики ---
+    // --- НОВОЕ: Функции для статистики (БЕЗ аутентификации) ---
     async function loadUserStats() {
         const partnerInput = document.getElementById('statsPartnerId').value;
         if (!partnerInput) {
