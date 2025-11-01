@@ -415,6 +415,24 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- НОВОЕ: Привлечённые сделки -->
+        <h4>Привлечённые сделки</h4>
+        <!-- Обёртка для прокрутки -->
+        <div class="table-scroll-wrapper">
+            <table id="referralDealsTable">
+                <thead>
+                    <tr>
+                        <th>ID сделки</th>
+                        <th>Тип</th>
+                        <th>Комиссия (₽)</th>
+                        <th>Реферал</th>
+                    </tr>
+                </thead>
+                <tbody id="referralDealsBody">
+                </tbody>
+            </table>
+        </div>
     </div>
     <!-- КОНЕЦ НОВОГО РАЗДЕЛА -->
 
@@ -507,7 +525,7 @@
             }
             const data = await response.json();
             console.log("Список перекупов загружен:", data);
-            // Создаём список ID и Имён
+            // Создаём список объектов с id и name
             partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
             console.log("partnersList:", partnersList);
             // Извлекаем значения для автодополнения (ID и Имена)
@@ -537,12 +555,11 @@
         return id.trim() !== '';
     }
 
-    // <<< ИСПРАВЛЕНО: partnerInput -> referrerInput >>>
     async function addPartner() {
         const id = document.getElementById('newPartnerId').value;
         const name = document.getElementById('newPartnerName').value;
         // Для реферера используем значение из автодополнения
-        const referrerInput = document.getElementById('newPartnerReferrer').value || null; // <<< Исправлено: referrerInput
+        const referrerInput = document.getElementById('newPartnerReferrer').value || null;
         const telegram = document.getElementById('newPartnerTelegram').value || null;
 
         if (!id || !name) {
@@ -551,7 +568,7 @@
         }
 
         // Попробуем найти ID по имени, если введено имя
-        let referrerId = referrerInput; // <<< Исправлено: referrerId
+        let referrerId = referrerInput;
         if (referrerInput && !referrerInput.startsWith('P') && !referrerInput.startsWith('T')) { // Простая проверка, что это не ID
              const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === referrerInput.toLowerCase());
              if (foundPartner) {
@@ -898,7 +915,27 @@
         treeContainer.appendChild(buildTree(rootNode));
         // <<< КОНЕЦ НОВОГО: Заполнить древовидную структуру рефералов >>>
 
-        // 5. Показать секцию
+        // 5. <<< НОВОЕ: Заполнить таблицу "Привлечённые сделки" >>>
+        const referralDealsBody = document.getElementById('referralDealsBody');
+        referralDealsBody.innerHTML = '';
+
+        // Собираем все сделки рефералов (уровень 1)
+        if (data.referral_deals && data.referral_deals.length > 0) {
+            data.referral_deals.forEach(d => {
+                const row = referralDealsBody.insertRow();
+                row.insertCell(0).textContent = d.id;
+                row.insertCell(1).textContent = d.type;
+                row.insertCell(2).textContent = d.amount;
+                row.insertCell(3).textContent = d.referrer_name || "Неизвестный"; // Имя реферала
+            });
+        } else {
+            const row = referralDealsBody.insertRow();
+            row.insertCell(0).setAttribute("colspan", 4);
+            row.insertCell(0).textContent = "Нет данных о привлечённых сделках.";
+        }
+        // <<< КОНЕЦ НОВОГО: Заполнить таблицу "Привлечённые сделки" >>>
+
+        // 6. Показать секцию
         document.getElementById('userStatsSection').style.display = 'block';
     }
 
@@ -916,6 +953,7 @@
         document.getElementById('userDealsBody').innerHTML = '';
         document.getElementById('userBonusesBody').innerHTML = '';
         document.getElementById('referralTree').innerHTML = ''; // Очистим дерево
+        document.getElementById('referralDealsBody').innerHTML = ''; // Очистим таблицу привлечённых сделок
     }
     // <<< КОНЕЦ НОВОГО: Функция для скрытия статистики >>>
 
@@ -936,4 +974,3 @@
 
 </body>
 </html>
-<!-- Обновлено: Добавлено древо и кнопка скрытия -->
