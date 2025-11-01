@@ -198,74 +198,6 @@
         .table-scroll-wrapper table {
             margin-bottom: 0;
         }
-
-        /* НОВОЕ: Стили для кнопки "Скрыть статистику" */
-        .hide-stats-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: var(--secondary);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--box-shadow);
-            transition: all 0.3s ease;
-        }
-
-        .hide-stats-btn:hover {
-            background: var(--primary);
-            transform: scale(1.1);
-        }
-
-        /* НОВОЕ: Стили для древовидной структуры рефералов */
-        .referral-tree {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--box-shadow);
-            margin-top: 25px;
-            border: 1px solid #ced4da;
-        }
-
-        .referral-tree h4 {
-            color: var(--secondary);
-            margin-bottom: 15px;
-        }
-
-        .tree-node {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .tree-node ul {
-            margin-left: 20px;
-            padding-left: 0;
-        }
-
-        .tree-node li {
-            margin: 5px 0;
-            padding: 5px;
-            border-radius: var(--border-radius);
-            background-color: #f8f9fa;
-        }
-
-        .tree-node strong {
-            color: var(--primary);
-        }
-
-        .tree-node small {
-            color: var(--dark);
-            font-size: 0.9em;
-        }
     </style>
 </head>
 <body>
@@ -299,7 +231,7 @@
             <option value="Кредит">Кредит</option>
         </select>
         <input type="number" id="newDealAmount" placeholder="Комиссия (₽)">
-        <input type="date" id="newDealDate" placeholder="Дата сделки (ГГГГ-ММ-ДД)">
+        <input type="date" id="newDealDate" placeholder="Дата сделки (ГГГГ-ММ-ДД)"> <!-- Новое поле -->
         <button onclick="addDeal()">Добавить сделку</button>
     </div>
 
@@ -349,15 +281,16 @@
         <button onclick="loadUserStats()">Показать статистику</button>
     </div>
 
-    <div id="userStatsSection" style="display: none; position: relative;">
-        <!-- НОВОЕ: Кнопка "Скрыть статистику" -->
-        <button class="hide-stats-btn" onclick="hideUserStats()" title="Скрыть статистику">×</button>
-
+    <div id="userStatsSection" style="display: none;">
         <h4>Итоги для <span id="statsPartnerIdDisplay"></span></h4>
         <div class="stats-cards">
             <div class="stats-card">
                 <h5>Всего сделок</h5>
                 <p id="statsTotalDeals">0</p>
+            </div>
+            <div class="stats-card">
+                <h5>Привлечённые сделки</h5> <!-- Новое -->
+                <p id="statsReferralDealsCount">0</p> <!-- Новое -->
             </div>
             <div class="stats-card">
                 <h5>Общая комиссия</h5>
@@ -372,15 +305,6 @@
                 <p id="statsReferralsCount">0</p>
             </div>
         </div>
-
-        <!-- НОВОЕ: Древовидная структура рефералов -->
-        <div class="referral-tree">
-            <h4>Древо рефералов</h4>
-            <ul id="referralTree" class="tree-node">
-                <!-- Дерево будет заполняться здесь -->
-            </ul>
-        </div>
-        <!-- КОНЕЦ НОВОГО: Древовидная структура рефералов -->
 
         <h4>Сделки партнера</h4>
         <!-- Обёртка для прокрутки -->
@@ -412,24 +336,6 @@
                     </tr>
                 </thead>
                 <tbody id="userBonusesBody">
-                </tbody>
-            </table>
-        </div>
-
-        <!-- НОВОЕ: Привлечённые сделки -->
-        <h4>Привлечённые сделки</h4>
-        <!-- Обёртка для прокрутки -->
-        <div class="table-scroll-wrapper">
-            <table id="referralDealsTable">
-                <thead>
-                    <tr>
-                        <th>ID сделки</th>
-                        <th>Тип</th>
-                        <th>Комиссия (₽)</th>
-                        <th>Реферал</th>
-                    </tr>
-                </thead>
-                <tbody id="referralDealsBody">
                 </tbody>
             </table>
         </div>
@@ -525,7 +431,7 @@
             }
             const data = await response.json();
             console.log("Список перекупов загружен:", data);
-            // Создаём список объектов с id и name
+            // Создаём список ID и Имён
             partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
             console.log("partnersList:", partnersList);
             // Извлекаем значения для автодополнения (ID и Имена)
@@ -655,9 +561,8 @@
             id: id,
             partner_id: partnerId,
             type: type,
-            amount: amount
-            // Дата пока не передаётся в API, так как API её не хранит
-            // Но можно добавить поле в API и передавать здесь
+            amount: amount,
+            date: date // <<< Добавляем дату
         };
 
         console.log("Отправляем на API:", dealData);
@@ -776,12 +681,12 @@
 
         // Найдём ID партнёра по введённому значению (ID или Имя), если автодополнение не используется напрямую
         let partnerId = partnerInput;
-        if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
+        if (!partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
              const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
              if (foundPartner) {
                  partnerId = foundPartner.id;
              } else {
-                 alert('Перекуп с таким именем не найден. Пожалуйста, выберите из списка или введите корректный ID.');
+                 alert('Перекуп с таким именем не найден');
                  return;
              }
         }
@@ -810,8 +715,9 @@
 
     function displayUserStats(data) {
         // 1. Отобразить ID партнера
-        document.getElementById('statsPartnerIdDisplay').textContent = data.partner_id;
+        document.getElementById('statsPartnerIdDisplay').textContent = `${data.partner_id} (${data.partner_name})`; // <<< Добавлено имя
         document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
+        document.getElementById('statsReferralDealsCount').textContent = data.stats.referral_deals_count; // <<< Добавлено
         document.getElementById('statsTotalCommission').textContent = `${data.stats.total_commission} ₽`;
         document.getElementById('statsTotalBonuses').textContent = `${data.stats.total_bonuses} ₽`;
         document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
@@ -833,7 +739,7 @@
             row.insertCell(0).textContent = "У партнера нет сделок.";
         }
 
-        // 3. Заполнить таблицу бонусов за рефералов
+        // 3. Заполнить таблицу бонусов
         const bonusesBody = document.getElementById('userBonusesBody');
         bonusesBody.innerHTML = '';
         if (data.bonuses_received && data.bonuses_received.length > 0) {
@@ -850,112 +756,10 @@
             row.insertCell(0).textContent = "Партнер не получил бонусов за рефералов.";
         }
 
-        // 4. <<< НОВОЕ: Заполнить древовидную структуру рефералов >>>
-        const treeContainer = document.getElementById('referralTree');
-        treeContainer.innerHTML = ''; // Очистим предыдущее дерево
-
-        // Функция для рекурсивного построения дерева
-        function buildTree(node, level = 0) {
-            const li = document.createElement('li');
-            li.style.paddingLeft = `${level * 20}px`; // Отступ для уровней
-
-            // Создаем элемент для имени и ID
-            const nameSpan = document.createElement('strong');
-            nameSpan.textContent = node.name || node.id; // Используем имя, если есть, иначе ID
-            li.appendChild(nameSpan);
-
-            // Создаем элемент для бонусов
-            const bonusSpan = document.createElement('small');
-            bonusSpan.textContent = ` (Бонусы: ${node.total_bonuses || 0} ₽)`;
-            li.appendChild(bonusSpan);
-
-            // Если есть дочерние элементы, создаем подсписок
-            if (node.children && node.children.length > 0) {
-                const ul = document.createElement('ul');
-                node.children.forEach(child => {
-                    ul.appendChild(buildTree(child, level + 1));
-                });
-                li.appendChild(ul);
-            }
-
-            return li;
-        }
-
-        // Получаем данные для дерева из data.referral_tree (если API возвращает)
-        // Пока делаем заглушку
-        const rootNode = {
-            id: data.partner_id,
-            name: data.partner_name || "Неизвестный", // Предположим, что API возвращает имя партнера
-            total_bonuses: data.stats.total_bonuses,
-            children: [] // Пока пусто, если API не возвращает дерево
-        };
-
-        // Попробуем получить дерево из data.referral_tree (если API возвращает)
-        if (data.referral_tree && data.referral_tree.length > 0) {
-            // Простая реализация: добавляем детей первого уровня
-            data.referral_tree.forEach(child => {
-                rootNode.children.push({
-                    id: child.id,
-                    name: child.name,
-                    total_bonuses: child.total_bonuses || 0,
-                    children: [] // Пока не углубляемся
-                });
-            });
-        } else {
-            // Если API не возвращает дерево, делаем заглушку
-            rootNode.children.push({
-                id: "Заглушка",
-                name: "Нет данных о рефералах",
-                total_bonuses: 0,
-                children: []
-            });
-        }
-
-        // Добавляем корневой узел в контейнер
-        treeContainer.appendChild(buildTree(rootNode));
-        // <<< КОНЕЦ НОВОГО: Заполнить древовидную структуру рефералов >>>
-
-        // 5. <<< НОВОЕ: Заполнить таблицу "Привлечённые сделки" >>>
-        const referralDealsBody = document.getElementById('referralDealsBody');
-        referralDealsBody.innerHTML = '';
-
-        // Собираем все сделки рефералов (уровень 1)
-        if (data.referral_deals && data.referral_deals.length > 0) {
-            data.referral_deals.forEach(d => {
-                const row = referralDealsBody.insertRow();
-                row.insertCell(0).textContent = d.id;
-                row.insertCell(1).textContent = d.type;
-                row.insertCell(2).textContent = d.amount;
-                row.insertCell(3).textContent = d.referrer_name || "Неизвестный"; // Имя реферала
-            });
-        } else {
-            const row = referralDealsBody.insertRow();
-            row.insertCell(0).setAttribute("colspan", 4);
-            row.insertCell(0).textContent = "Нет данных о привлечённых сделках.";
-        }
-        // <<< КОНЕЦ НОВОГО: Заполнить таблицу "Привлечённые сделки" >>>
-
-        // 6. Показать секцию
+        // 4. Показать секцию
         document.getElementById('userStatsSection').style.display = 'block';
     }
-
-    // <<< НОВОЕ: Функция для скрытия статистики >>>
-    function hideUserStats() {
-        document.getElementById('userStatsSection').style.display = 'none';
-        // Очистим поле ввода
-        document.getElementById('statsPartnerInput').value = '';
-        // Очистим данные в секции (опционально)
-        document.getElementById('statsPartnerIdDisplay').textContent = '';
-        document.getElementById('statsTotalDeals').textContent = '0';
-        document.getElementById('statsTotalCommission').textContent = '0 ₽';
-        document.getElementById('statsTotalBonuses').textContent = '0 ₽';
-        document.getElementById('statsReferralsCount').textContent = '0';
-        document.getElementById('userDealsBody').innerHTML = '';
-        document.getElementById('userBonusesBody').innerHTML = '';
-        document.getElementById('referralTree').innerHTML = ''; // Очистим дерево
-        document.getElementById('referralDealsBody').innerHTML = ''; // Очистим таблицу привлечённых сделок
-    }
-    // <<< КОНЕЦ НОВОГО: Функция для скрытия статистики >>>
+    // --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
 
     function exportToCSV() {
         alert('Экспорт в CSV будет реализован позже через API.');
