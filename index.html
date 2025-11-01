@@ -129,6 +129,12 @@
         }
 
         /* Стили для выпадающих списков */
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
         .autocomplete-items {
           position: absolute;
           border: 1px solid #d4d4d4;
@@ -140,8 +146,6 @@
           right: 0;
           max-height: 200px;
           overflow-y: auto;
-          background-color: white;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
 
         .autocomplete-items div {
@@ -197,79 +201,10 @@
             border: 1px solid #ced4da;
             border-radius: var(--border-radius);
             margin-top: 10px;
-            background-color: white;
         }
 
         .table-scroll-wrapper table {
             margin-bottom: 0;
-        }
-
-        /* НОВОЕ: Стили для кнопки "Скрыть статистику" */
-        .hide-stats-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: var(--secondary);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--box-shadow);
-            transition: all 0.3s ease;
-        }
-
-        .hide-stats-btn:hover {
-            background: var(--primary);
-            transform: scale(1.1);
-        }
-
-        /* НОВОЕ: Стили для древовидной структуры рефералов */
-        .referral-tree {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--box-shadow);
-            margin-top: 25px;
-            border: 1px solid #ced4da;
-        }
-
-        .referral-tree h4 {
-            color: var(--secondary);
-            margin-bottom: 15px;
-        }
-
-        .tree-node {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .tree-node ul {
-            margin-left: 20px;
-            padding-left: 0;
-        }
-
-        .tree-node li {
-            margin: 5px 0;
-            padding: 5px;
-            border-radius: var(--border-radius);
-            background-color: #f8f9fa;
-        }
-
-        .tree-node strong {
-            color: var(--primary);
-        }
-
-        .tree-node small {
-            color: var(--dark);
-            font-size: 0.9em;
         }
     </style>
 </head>
@@ -286,7 +221,8 @@
         <label>Добавить перекупа</label>
         <input type="text" id="newPartnerId" placeholder="ID перекупа (P001 или 89003045231)">
         <input type="text" id="newPartnerName" placeholder="Имя">
-        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
+        <!-- <<< Автодополнение для referrer_id >>> -->
+        <div class="autocomplete">
             <input type="text" id="newPartnerReferrer" placeholder="Привлечён кем (ID или Имя)">
         </div>
         <input type="text" id="newPartnerTelegram" placeholder="Telegram ID (опционально)">
@@ -296,7 +232,8 @@
     <div class="form-group">
         <label>Добавить сделку</label>
         <input type="text" id="newDealId" placeholder="ID сделки (S1001 или Deal_123)">
-        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
+        <!-- <<< Автодополнение для partner_id >>> -->
+        <div class="autocomplete">
             <input type="text" id="newDealPartner" placeholder="ID перекупа (ID или Имя)">
         </div>
         <select id="newDealType">
@@ -304,24 +241,23 @@
             <option value="Кредит">Кредит</option>
         </select>
         <input type="number" id="newDealAmount" placeholder="Комиссия (₽)">
-        <input type="date" id="newDealDate" placeholder="Дата сделки (ГГГГ-ММ-ДД)"> <!-- Новое поле -->
+        <input type="date" id="newDealDate" placeholder="Дата сделки (ГГГГ-ММ-ДД)">
         <button onclick="addDeal()">Добавить сделку</button>
     </div>
 
-    <h3>📜 История сделок</h3> <!-- <<< Переименовано -->
-    <!-- Обёртка для прокрутки -->
+    <h3>💰 Бонусы</h3>
+    <!-- <<< Обёртка для прокрутки >>> -->
     <div class="table-scroll-wrapper">
-        <table id="bonusesTable"> <!-- <<< Осталось bonusesTable для совместимости -->
+        <table id="bonusesTable">
             <thead>
                 <tr>
                     <th>ID сделки</th>
                     <th>ID перекупа</th>
-                    <th>Имя перекупа</th> <!-- <<< Новая колонка -->
                     <th>ID реферера</th>
                     <th>Уровень</th>
                     <th>Тип</th>
-                    <th>Комиссия (₽)</th> <!-- <<< Переименовано -->
-                    <th>Дата</th> <!-- <<< Новая колонка -->
+                    <th>Бонус (₽)</th>
+                    <th>Дата</th> <!-- Новая колонка -->
                 </tr>
             </thead>
             <tbody id="bonusesBody">
@@ -329,10 +265,10 @@
         </table>
     </div>
 
-    <h3>💰 Бонусы</h3> <!-- <<< Переименовано -->
-    <!-- Обёртка для прокрутки -->
+    <h3>💳 Выплаты</h3>
+    <!-- <<< Обёртка для прокрутки >>> -->
     <div class="table-scroll-wrapper">
-        <table id="payoutsTable"> <!-- <<< Осталось payoutsTable для совместимости -->
+        <table id="payoutsTable">
             <thead>
                 <tr>
                     <th>ID перекупа</th>
@@ -349,25 +285,19 @@
     <h3>📊 Статистика по пользователю</h3>
     <div class="form-group">
         <label>Выберите перекупа (ID или Имя)</label>
-        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
+        <!-- <<< Автодополнение для статистики >>> -->
+        <div class="autocomplete">
             <input type="text" id="statsPartnerInput" placeholder="Введите ID или Имя перекупа">
         </div>
         <button onclick="loadUserStats()">Показать статистику</button>
     </div>
 
-    <div id="userStatsSection" style="display: none; position: relative;"> <!-- <<< position: relative для кнопки -->
-        <!-- НОВОЕ: Кнопка "Скрыть статистику" -->
-        <button class="hide-stats-btn" onclick="hideUserStats()" title="Скрыть статистику">×</button>
-
+    <div id="userStatsSection" style="display: none;">
         <h4>Итоги для <span id="statsPartnerIdDisplay"></span></h4>
         <div class="stats-cards">
             <div class="stats-card">
                 <h5>Всего сделок</h5>
                 <p id="statsTotalDeals">0</p>
-            </div>
-            <div class="stats-card">
-                <h5>Привлечённые сделки</h5> <!-- <<< Новое -->
-                <p id="statsReferralDealsCount">0</p> <!-- <<< Новое -->
             </div>
             <div class="stats-card">
                 <h5>Общая комиссия</h5>
@@ -383,17 +313,8 @@
             </div>
         </div>
 
-        <!-- НОВОЕ: Древовидная структура рефералов -->
-        <div class="referral-tree">
-            <h4>Древо рефералов</h4>
-            <ul id="referralTree" class="tree-node">
-                <!-- Дерево будет заполняться здесь -->
-            </ul>
-        </div>
-        <!-- КОНЕЦ НОВОГО: Древовидная структура рефералов -->
-
         <h4>Сделки партнера</h4>
-        <!-- Обёртка для прокрутки -->
+        <!-- <<< Обёртка для прокрутки >>> -->
         <div class="table-scroll-wrapper">
             <table id="userDealsTable">
                 <thead>
@@ -401,7 +322,7 @@
                         <th>ID сделки</th>
                         <th>Тип</th>
                         <th>Комиссия (₽)</th>
-                        <th>Дата</th> <!-- <<< Новая колонка -->
+                        <!-- Добавьте сюда колонку 'Дата', если API будет её возвращать -->
                     </tr>
                 </thead>
                 <tbody id="userDealsBody">
@@ -410,17 +331,15 @@
         </div>
 
         <h4>Бонусы (за привлечённых)</h4>
-        <!-- Обёртка для прокрутки -->
+        <!-- <<< Обёртка для прокрутки >>> -->
         <div class="table-scroll-wrapper">
             <table id="userBonusesTable">
                 <thead>
                     <tr>
                         <th>ID сделки</th>
                         <th>ID перекупа</th>
-                        <th>Имя перекупа</th> <!-- <<< Новая колонка -->
                         <th>Уровень</th>
                         <th>Бонус (₽)</th>
-                        <th>Дата</th> <!-- <<< Новая колонка -->
                     </tr>
                 </thead>
                 <tbody id="userBonusesBody">
@@ -520,29 +439,28 @@
         });
     }
 
-async function loadPartners() {
-    try {
-        console.log("Загрузка списка перекупов...");
-        const response = await fetch(`${API_URL}/partner`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    async function loadPartners() {
+        try {
+            console.log("Загрузка списка перекупов...");
+            const response = await fetch(`${API_URL}/partner`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("Список перекупов загружен:", data);
+            // Создаём список объектов с id и name
+            partnersList = data.map(p => ({ id: p.id, name: p.name }));
+            console.log("partnersList:", partnersList);
+            // Инициализируем автодополнение для полей
+            autocomplete(document.getElementById("newDealPartner"), partnersList);
+            autocomplete(document.getElementById("newPartnerReferrer"), partnersList);
+            // Для нового поля статистики
+            autocomplete(document.getElementById("statsPartnerInput"), partnersList);
+        } catch (e) {
+            console.error("loadPartners: ошибка", e);
         }
-        const data = await response.json();
-        console.log("Список перекупов загружен:", data);
-        // Создаём список объектов с id и name
-        partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
-        console.log("partnersList:", partnersList);
-        // Извлекаем значения для автодополнения (ID и Имена)
-        const autoCompleteValues = partnersList.flatMap(p => [p.id, p.name]); // <<< Массив строк
-        // Инициализируем автодополнение для полей
-        autocomplete(document.getElementById("newDealPartner"), autoCompleteValues); // <<< Передаём массив строк
-        autocomplete(document.getElementById("newPartnerReferrer"), autoCompleteValues);
-        // Для нового поля статистики
-        autocomplete(document.getElementById("statsPartnerInput"), autoCompleteValues);
-    } catch (e) {
-        console.error("loadPartners: ошибка", e);
     }
-}
+
     // --- Код для работы с API ---
     async function checkPartnerExists(id) {
         try {
@@ -561,22 +479,13 @@ async function loadPartners() {
     async function addPartner() {
         const id = document.getElementById('newPartnerId').value;
         const name = document.getElementById('newPartnerName').value;
-        // Для реферера используем значение из автодополнения
-        const referrerInput = document.getElementById('newPartnerReferrer').value || null;
+        // Для реферера используем значение из автодополнения (это будет ID)
+        const referrerId = document.getElementById('newPartnerReferrer').value || null;
         const telegram = document.getElementById('newPartnerTelegram').value || null;
 
         if (!id || !name) {
             alert('Заполните ID и Имя');
             return;
-        }
-
-        // Попробуем найти ID по имени, если введено имя
-        let referrerId = referrerInput;
-        if (referrerInput && !referrerInput.startsWith('P') && !referrerInput.startsWith('T')) { // Простая проверка, что это не ID
-             const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === referrerInput.toLowerCase());
-             if (foundPartner) {
-                 referrerId = foundPartner.id;
-             }
         }
 
         const exists = await checkPartnerExists(id);
@@ -623,26 +532,14 @@ async function loadPartners() {
 
     async function addDeal() {
         const id = document.getElementById('newDealId').value;
-        const partnerInput = document.getElementById('newDealPartner').value; // Это может быть ID или Имя
+        const partnerId = document.getElementById('newDealPartner').value; // <<< Это будет ID, выбранный в автодополнении
         const type = document.getElementById('newDealType').value;
         const amount = parseFloat(document.getElementById('newDealAmount').value);
         const dateStr = document.getElementById('newDealDate').value; // Новое поле
 
-        if (!id || !partnerInput || isNaN(amount)) {
+        if (!id || !partnerId || isNaN(amount)) {
             alert('Заполните все поля сделки');
             return;
-        }
-
-        // Найдём ID партнёра по введённому значению (ID или Имя)
-        let partnerId = partnerInput;
-        if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
-             const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
-             if (foundPartner) {
-                 partnerId = foundPartner.id;
-             } else {
-                 alert('Перекуп с таким именем не найден');
-                 return;
-             }
         }
 
         const exists = await checkDealExists(id);
@@ -656,10 +553,11 @@ async function loadPartners() {
 
         const dealData = {
             id: id,
-            partner_id: partnerId,
+            partner_id: partnerId, // <<< Отправляем только ID партнёра
             type: type,
-            amount: amount,
-            date: date // <<< Добавляем дату
+            amount: amount
+            // Дата пока не передаётся в API, так как API её не хранит
+            // Но можно добавить поле в API и передавать здесь
         };
 
         console.log("Отправляем на API:", dealData);
@@ -675,7 +573,7 @@ async function loadPartners() {
         if (response.ok) {
             alert('Сделка добавлена');
             document.getElementById('newDealId').value = '';
-            document.getElementById('newDealPartner').value = ''; // Очистим поле (ID)
+            document.getElementById('newDealPartner').value = ''; // Очищаем поле (ID)
             document.getElementById('newDealAmount').value = '';
             document.getElementById('newDealDate').value = ''; // Очистим поле даты
 
@@ -694,7 +592,7 @@ async function loadPartners() {
     async function loadBonuses() {
         console.log("loadBonuses: начало");
         const tbody = document.getElementById('bonusesBody');
-        tbody.innerHTML = '<tr><td colspan="8">Загрузка...</td></tr>'; // 8 колонок теперь
+        tbody.innerHTML = '<tr><td colspan="7">Загрузка...</td></tr>'; // 7 колонок теперь
 
         try {
             console.log("loadBonuses: отправляем запрос...");
@@ -712,27 +610,23 @@ async function loadPartners() {
                     const row = tbody.insertRow();
                     row.insertCell(0).textContent = b.deal_id;
                     row.insertCell(1).textContent = b.partner_id;
-                    // <<< НОВОЕ: Получаем имя партнёра по ID >>>
-                    const partner = partnersList.find(p => p.id === b.partner_id);
-                    row.insertCell(2).textContent = partner ? partner.name : "Неизвестный"; // <<< Имя партнёра
-                    // <<< КОНЕЦ НОВОГО: Получаем имя партнёра по ID >>>
-                    row.insertCell(3).textContent = b.referrer_id;
-                    row.insertCell(4).textContent = b.level;
-                    row.insertCell(5).textContent = b.type;
-                    row.insertCell(6).textContent = b.amount; // <<< Комиссия
-                    // <<< НОВОЕ: Получаем дату сделки >>>
-                    row.insertCell(7).textContent = b.date || new Date().toLocaleDateString(); // <<< Дата
-                    // <<< КОНЕЦ НОВОГО: Получаем дату сделки >>>
+                    row.insertCell(2).textContent = b.referrer_id;
+                    row.insertCell(3).textContent = b.level;
+                    row.insertCell(4).textContent = b.type;
+                    row.insertCell(5).textContent = b.bonus;
+                    // Пока дата берётся из даты расчёта/добавления, т.к. API не возвращает дату сделки
+                    // Если API будет возвращать дату сделки (например, b.deal_date), используйте её
+                    row.insertCell(6).textContent = new Date().toLocaleDateString(); // Заглушка
                 });
             } else {
                 const row = tbody.insertRow();
-                row.insertCell(0).setAttribute("colspan", 8); // 8 колонок
+                row.insertCell(0).setAttribute("colspan", 7); // 7 колонок
                 row.insertCell(0).textContent = "Нет данных";
             }
             console.log("loadBonuses: таблица обновлена");
         } catch (e) {
             console.error("loadBonuses: ошибка", e);
-            tbody.innerHTML = '<tr><td colspan="8">Ошибка загрузки</td></tr>'; // 8 колонок
+            tbody.innerHTML = '<tr><td colspan="7">Ошибка загрузки</td></tr>'; // 7 колонок
         }
     }
 
@@ -774,25 +668,22 @@ async function loadPartners() {
     // --- НОВОЕ: Функции для статистики (БЕЗ аутентификации) ---
     async function loadUserStats() {
         const partnerInput = document.getElementById('statsPartnerInput').value.trim();
-
         if (!partnerInput) {
-            alert('Пожалуйста, введите ID или Имя перекупа.');
+            alert('Введите ID или Имя перекупа');
             return;
         }
 
         // Найдём ID партнёра по введённому значению (ID или Имя), если автодополнение не используется напрямую
         let partnerId = partnerInput;
-        if (!partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
+        if (!partnerInput.startsWith('P') && !partnerInput.startsWith('T') && !/^\d+$/.test(partnerInput)) { // Простая проверка, что это не ID
              const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
              if (foundPartner) {
-                 partnerId = foundPartner.id;
+                 partnerId = foundPartner.id; // <<< Используем ID из списка
              } else {
                  alert('Перекуп с таким именем не найден');
                  return;
              }
         }
-
-        console.log(`Запрашиваем статистику для партнера: ${partnerId}`);
 
         try {
             const response = await fetch(`${API_URL}/deals/partner/${partnerId}`);
@@ -801,7 +692,7 @@ async function loadPartners() {
                      alert('Данные для этого партнера не найдены.');
                 } else {
                      const errorText = await response.text();
-                     alert(`Ошибка при загрузке статистики: ${response.status} - ${errorText}`);
+                     alert('Ошибка при загрузке статистики: ' + errorText);
                 }
                 return;
             }
@@ -815,144 +706,55 @@ async function loadPartners() {
     }
 
     function displayUserStats(data) {
-        // 1. Отобразить ID партнера
-        document.getElementById('statsPartnerIdDisplay').textContent = `${data.partner_id} (${data.partner_name})`; // <<< Добавлено имя
-        document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
-        document.getElementById('statsReferralDealsCount').textContent = data.stats.referral_deals_count; // <<< Добавлено
-        document.getElementById('statsTotalCommission').textContent = `${data.stats.total_commission} ₽`;
-        document.getElementById('statsTotalBonuses').textContent = `${data.stats.total_bonuses} ₽`;
-        document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
+    // 1. Отобразить ID партнера
+    document.getElementById('statsPartnerIdDisplay').textContent = data.partner_id; // <<< Исправлено
 
-        // 2. Заполнить таблицу сделок партнера
-        const dealsBody = document.getElementById('userDealsBody');
-        dealsBody.innerHTML = '';
-        if (data.deals && data.deals.length > 0) {
-            data.deals.forEach(d => {
-                const row = dealsBody.insertRow();
-                row.insertCell(0).textContent = d.id;
-                row.insertCell(1).textContent = d.type;
-                row.insertCell(2).textContent = d.amount;
-                // <<< НОВОЕ: Добавляем дату >>>
-                row.insertCell(3).textContent = d.date || new Date().toLocaleDateString(); // <<< Дата
-                // <<< КОНЕЦ НОВОГО: Добавляем дату >>>
-            });
-        } else {
+    // 2. Заполнить карточки статистики
+    document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
+    document.getElementById('statsTotalCommission').textContent = data.stats.total_commission + ' ₽';
+    document.getElementById('statsTotalBonuses').textContent = data.stats.total_bonuses + ' ₽';
+    document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
+
+    // 3. Заполнить таблицу сделок партнера
+    const dealsBody = document.getElementById('userDealsBody');
+    dealsBody.innerHTML = '';
+    if (data.deals && data.deals.length > 0) {
+        data.deals.forEach(d => {
             const row = dealsBody.insertRow();
-            row.insertCell(0).setAttribute("colspan", 4); // <<< 4 колонки
-            row.insertCell(0).textContent = "У партнера нет сделок.";
-        }
+            row.insertCell(0).textContent = d.id;
+            row.insertCell(1).textContent = d.type;
+            row.insertCell(2).textContent = d.amount;
+            // Если API возвращает дату: row.insertCell(3).textContent = d.created_at или другое поле даты;
+        });
+    } else {
+        const row = dealsBody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 3; // Количество колонок в таблице
+        cell.textContent = "У партнера нет сделок.";
+    }
 
-        // 3. Заполнить таблицу бонусов
-        const bonusesBody = document.getElementById('userBonusesBody');
-        bonusesBody.innerHTML = '';
-        if (data.bonuses_received && data.bonuses_received.length > 0) {
-            data.bonuses_received.forEach(b => {
-                const row = bonusesBody.insertRow();
-                row.insertCell(0).textContent = b.deal_id;
-                row.insertCell(1).textContent = b.partner_id; // ID перекупа, за которого начислен бонус
-                // <<< НОВОЕ: Получаем имя партнёра по ID >>>
-                const partner = partnersList.find(p => p.id === b.partner_id);
-                row.insertCell(2).textContent = partner ? partner.name : "Неизвестный"; // <<< Имя партнёра
-                // <<< КОНЕЦ НОВОГО: Получаем имя партнёра по ID >>>
-                row.insertCell(3).textContent = b.level;
-                row.insertCell(4).textContent = b.bonus;
-                // <<< НОВОЕ: Добавляем дату >>>
-                row.insertCell(5).textContent = b.date || new Date().toLocaleDateString(); // <<< Дата
-                // <<< КОНЕЦ НОВОГО: Добавляем дату >>>
-            });
-        } else {
+    // 4. Заполнить таблицу бонусов за рефералов
+    const bonusesBody = document.getElementById('userBonusesBody');
+    bonusesBody.innerHTML = '';
+    if (data.bonuses_received && data.bonuses_received.length > 0) {
+        data.bonuses_received.forEach(b => {
             const row = bonusesBody.insertRow();
-            row.insertCell(0).setAttribute("colspan", 6); // <<< 6 колонок
-            row.insertCell(0).textContent = "Партнер не получил бонусов за рефералов.";
-        }
-
-        // 4. <<< НОВОЕ: Заполнить древовидную структуру рефералов >>>
-        const treeContainer = document.getElementById('referralTree');
-        treeContainer.innerHTML = ''; // Очистим предыдущее дерево
-
-        // Функция для рекурсивного построения дерева
-        function buildTree(node, level = 0) {
-            const li = document.createElement('li');
-            li.style.paddingLeft = `${level * 20}px`; // Отступ для уровней
-
-            // Создаем элемент для имени и ID
-            const nameSpan = document.createElement('strong');
-            nameSpan.textContent = node.name || node.id; // Используем имя, если есть, иначе ID
-            li.appendChild(nameSpan);
-
-            // Создаем элемент для бонусов
-            const bonusSpan = document.createElement('small');
-            bonusSpan.textContent = ` (Бонусы: ${node.total_bonuses || 0} ₽)`;
-            li.appendChild(bonusSpan);
-
-            // Если есть дочерние элементы, создаем подсписок
-            if (node.children && node.children.length > 0) {
-                const ul = document.createElement('ul');
-                node.children.forEach(child => {
-                    ul.appendChild(buildTree(child, level + 1));
-                });
-                li.appendChild(ul);
-            }
-
-            return li;
-        }
-
-        // Получаем данные для дерева из data.referral_tree (если API возвращает)
-        // Пока делаем заглушку
-        const rootNode = {
-            id: data.partner_id,
-            name: data.partner_name || "Неизвестный", // Предположим, что API возвращает имя партнера
-            total_bonuses: data.stats.total_bonuses,
-            children: [] // Пока пусто, если API не возвращает дерево
-        };
-
-        // Попробуем получить дерево из data.referral_tree (если API возвращает)
-        if (data.referral_tree && data.referral_tree.length > 0) {
-            // Простая реализация: добавляем детей первого уровня
-            data.referral_tree.forEach(child => {
-                rootNode.children.push({
-                    id: child.id,
-                    name: child.name,
-                    total_bonuses: child.total_bonuses || 0,
-                    children: [] // Пока не углубляемся
-                });
-            });
-        } else {
-            // Если API не возвращает дерево, делаем заглушку
-            rootNode.children.push({
-                id: "Заглушка",
-                name: "Нет данных о рефералах",
-                total_bonuses: 0,
-                children: []
-            });
-        }
-
-        // Добавляем корневой узел в контейнер
-        treeContainer.appendChild(buildTree(rootNode));
-        // <<< КОНЕЦ НОВОГО: Заполнить древовидную структуру рефералов >>>
-
-        // 5. Показать секцию
-        document.getElementById('userStatsSection').style.display = 'block';
+            row.insertCell(0).textContent = b.deal_id;
+            row.insertCell(1).textContent = b.partner_id; // ID перекупа, за которого начислен бонус
+            row.insertCell(2).textContent = b.level;
+            row.insertCell(3).textContent = b.bonus;
+        });
+    } else {
+        const row = bonusesBody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 4; // Количество колонок в таблице
+        cell.textContent = "Партнер не получил бонусов за рефералов.";
     }
-    // --- КОНЕЦ НОВОГО: Функция для статистики ---
 
-    // --- НОВОЕ: Функция для скрытия статистики ---
-    function hideUserStats() {
-        document.getElementById('userStatsSection').style.display = 'none';
-        // Очистим поле ввода
-        document.getElementById('statsPartnerInput').value = '';
-        // Очистим данные в секции (опционально)
-        document.getElementById('statsPartnerIdDisplay').textContent = '';
-        document.getElementById('statsTotalDeals').textContent = '0';
-        document.getElementById('statsReferralDealsCount').textContent = '0'; // <<< Очищаем
-        document.getElementById('statsTotalCommission').textContent = '0 ₽';
-        document.getElementById('statsTotalBonuses').textContent = '0 ₽';
-        document.getElementById('statsReferralsCount').textContent = '0';
-        document.getElementById('userDealsBody').innerHTML = '';
-        document.getElementById('userBonusesBody').innerHTML = '';
-        document.getElementById('referralTree').innerHTML = ''; // Очистим дерево
-    }
-    // --- КОНЕЦ НОВОГО: Функция для скрытия статистики ---
+    // 5. Показать секцию со статистикой
+    document.getElementById('userStatsSection').style.display = 'block';
+}
+    // --- КОНЕЦ НОВОГО ---
 
     function exportToCSV() {
         alert('Экспорт в CSV будет реализован позже через API.');
@@ -961,7 +763,7 @@ async function loadPartners() {
     // --- Загрузка при открытии страницы ---
     window.addEventListener('DOMContentLoaded', async () => {
         console.log("Страница загружена. Инициализация...");
-        await loadPartners(); // Загружаем список для автодополнения
+        await loadPartners(); // Загружаем список перекупов для автодополнения
         await loadBonuses();  // Загружаем бонусы
         await loadPayouts();   // Загружаем выплаты
         console.log("Инициализация завершена.");
