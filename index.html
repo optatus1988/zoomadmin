@@ -520,29 +520,29 @@
         });
     }
 
-    async function loadPartners() {
-        try {
-            console.log("Загрузка списка перекупов...");
-            const response = await fetch(`${API_URL}/partner`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log("Список перекупов загружен:", data);
-            // Создаём список ID и Имён
-            partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
-            console.log("partnersList:", partnersList);
-            // Извлекаем значения для автодополнения (ID и Имена)
-            const autoCompleteValues = partnersList.flatMap(p => [p.id, p.name]);
-            // Инициализируем автодополнение для полей
-            autocomplete(document.getElementById("newDealPartner"), autoCompleteValues);
-            autocomplete(document.getElementById("newPartnerReferrer"), autoCompleteValues);
-            // Для нового поля статистики
-            autocomplete(document.getElementById("statsPartnerInput"), autoCompleteValues);
-        } catch (e) {
-            console.error("loadPartners: ошибка", e);
+async function loadPartners() {
+    try {
+        console.log("Загрузка списка перекупов...");
+        const response = await fetch(`${API_URL}/partner`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        console.log("Список перекупов загружен:", data);
+        // Создаём список объектов с id и name
+        partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
+        console.log("partnersList:", partnersList);
+        // Извлекаем значения для автодополнения (ID и Имена)
+        const autoCompleteValues = partnersList.flatMap(p => [p.id, p.name]); // <<< Массив строк
+        // Инициализируем автодополнение для полей
+        autocomplete(document.getElementById("newDealPartner"), autoCompleteValues); // <<< Передаём массив строк
+        autocomplete(document.getElementById("newPartnerReferrer"), autoCompleteValues);
+        // Для нового поля статистики
+        autocomplete(document.getElementById("statsPartnerInput"), autoCompleteValues);
+    } catch (e) {
+        console.error("loadPartners: ошибка", e);
     }
+}
 
     // --- Код для работы с API ---
     async function checkPartnerExists(id) {
