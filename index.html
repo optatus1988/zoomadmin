@@ -221,8 +221,7 @@
         <label>Добавить перекупа</label>
         <input type="text" id="newPartnerId" placeholder="ID перекупа (P001 или 89003045231)">
         <input type="text" id="newPartnerName" placeholder="Имя">
-        <!-- <<< Автодополнение для referrer_id >>> -->
-        <div class="autocomplete">
+        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
             <input type="text" id="newPartnerReferrer" placeholder="Привлечён кем (ID или Имя)">
         </div>
         <input type="text" id="newPartnerTelegram" placeholder="Telegram ID (опционально)">
@@ -232,8 +231,7 @@
     <div class="form-group">
         <label>Добавить сделку</label>
         <input type="text" id="newDealId" placeholder="ID сделки (S1001 или Deal_123)">
-        <!-- <<< Автодополнение для partner_id >>> -->
-        <div class="autocomplete">
+        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
             <input type="text" id="newDealPartner" placeholder="ID перекупа (ID или Имя)">
         </div>
         <select id="newDealType">
@@ -245,49 +243,64 @@
         <button onclick="addDeal()">Добавить сделку</button>
     </div>
 
-    <h3>💰 История сделок</h3>
-    <!-- <<< Обёртка для прокрутки >>> -->
+    <!-- НОВОЕ: Форма для добавления выплаты -->
+    <div class="form-group">
+        <label>Добавить выплату</label>
+        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
+            <input type="text" id="newPayoutPartner" placeholder="ID перекупа (ID или Имя)">
+        </div>
+        <input type="number" id="newPayoutAmount" placeholder="Сумма выплаты (₽)">
+        <input type="date" id="newPayoutDate" placeholder="Дата выплаты (ГГГГ-ММ-ДД)">
+        <button onclick="addPayout()">Добавить выплату</button>
+    </div>
+    <!-- КОНЕЦ НОВОГО: Форма для добавления выплаты -->
+
+    <h3>💰 Бонусы</h3>
+    <!-- Обёртка для прокрутки -->
     <div class="table-scroll-wrapper">
-<table id="bonusesTable"> <!-- <<< Осталось bonusesTable для совместимости -->
-    <thead>
-        <tr>
-            <th>ID сделки</th>
-            <th>ID перекупа</th>
-            <th>Имя перекупа</th> <!-- <<< Добавлено -->
-            <th>ID реферера</th>
-            <th>Уровень</th>
-            <!-- <th>Тип</th> --> <!-- <<< Удалено -->
-            <th>Бонус (₽)</th>
-            <th>Дата</th>
-        </tr>
-    </thead>
-    <tbody id="bonusesBody">
-    </tbody>
-</table>
+        <table id="bonusesTable">
+            <thead>
+                <tr>
+                    <th>ID сделки</th>
+                    <th>ID перекупа</th>
+                    <th>Имя перекупа</th> <!-- Новая колонка -->
+                    <th>ID реферера</th>
+                    <th>Уровень</th>
+                    <th>Тип</th>
+                    <th>Бонус (₽)</th>
+                    <th>Дата</th> <!-- Новая колонка -->
+                </tr>
+            </thead>
+            <tbody id="bonusesBody">
+            </tbody>
+        </table>
     </div>
 
-    <h3>💳 Бонусы</h3>
-    <!-- <<< Обёртка для прокрутки >>> -->
+    <!-- <<< ИЗМЕНЕНО: Таблица "Выплаты" с новыми колонками >>> -->
+    <h3>💳 Выплаты</h3>
+    <!-- Обёртка для прокрутки -->
     <div class="table-scroll-wrapper">
         <table id="payoutsTable">
             <thead>
                 <tr>
                     <th>ID перекупа</th>
                     <th>Имя</th>
-                    <th>Сумма (₽)</th>
+                    <th>Общая сумма бонусов (₽)</th> <!-- <<< Изменено -->
+                    <th>Выплачено (₽)</th> <!-- <<< Новое -->
+                    <th>Остаток (₽)</th> <!-- <<< Новое -->
                 </tr>
             </thead>
             <tbody id="payoutsBody">
             </tbody>
         </table>
     </div>
+    <!-- <<< КОНЕЦ ИЗМЕНЕНИЙ: Таблица "Выплаты" с новыми колонками >>> -->
 
     <!-- НОВЫЙ РАЗДЕЛ: Статистика по пользователю -->
     <h3>📊 Статистика по пользователю</h3>
     <div class="form-group">
         <label>Выберите перекупа (ID или Имя)</label>
-        <!-- <<< Автодополнение для статистики >>> -->
-        <div class="autocomplete">
+        <div class="autocomplete" style="position: relative; display: inline-block; width: 100%;">
             <input type="text" id="statsPartnerInput" placeholder="Введите ID или Имя перекупа">
         </div>
         <button onclick="loadUserStats()">Показать статистику</button>
@@ -315,7 +328,7 @@
         </div>
 
         <h4>Сделки партнера</h4>
-        <!-- <<< Обёртка для прокрутки >>> -->
+        <!-- Обёртка для прокрутки -->
         <div class="table-scroll-wrapper">
             <table id="userDealsTable">
                 <thead>
@@ -332,7 +345,7 @@
         </div>
 
         <h4>Бонусы (за привлечённых)</h4>
-        <!-- <<< Обёртка для прокрутки >>> -->
+        <!-- Обёртка для прокрутки -->
         <div class="table-scroll-wrapper">
             <table id="userBonusesTable">
                 <thead>
@@ -450,13 +463,18 @@
             const data = await response.json();
             console.log("Список перекупов загружен:", data);
             // Создаём список объектов с id и name
-            partnersList = data.map(p => ({ id: p.id, name: p.name }));
+            partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
             console.log("partnersList:", partnersList);
+            // Извлекаем значения для автодополнения (ID и Имена)
+            const autoCompleteValues = partnersList.flatMap(p => [p.id, p.name]);
             // Инициализируем автодополнение для полей
-            autocomplete(document.getElementById("newDealPartner"), partnersList);
-            autocomplete(document.getElementById("newPartnerReferrer"), partnersList);
+            autocomplete(document.getElementById("newDealPartner"), autoCompleteValues);
+            autocomplete(document.getElementById("newPartnerReferrer"), autoCompleteValues);
             // Для нового поля статистики
-            autocomplete(document.getElementById("statsPartnerInput"), partnersList);
+            autocomplete(document.getElementById("statsPartnerInput"), autoCompleteValues);
+            // <<< НОВОЕ: Для нового поля выплаты >>>
+            autocomplete(document.getElementById("newPayoutPartner"), autoCompleteValues);
+            // <<< КОНЕЦ НОВОГО: Для нового поля выплаты >>>
         } catch (e) {
             console.error("loadPartners: ошибка", e);
         }
@@ -481,12 +499,21 @@
         const id = document.getElementById('newPartnerId').value;
         const name = document.getElementById('newPartnerName').value;
         // Для реферера используем значение из автодополнения (это будет ID)
-        const referrerId = document.getElementById('newPartnerReferrer').value || null;
+        const referrerInput = document.getElementById('newPartnerReferrer').value || null;
         const telegram = document.getElementById('newPartnerTelegram').value || null;
 
         if (!id || !name) {
             alert('Заполните ID и Имя');
             return;
+        }
+
+        // Попробуем найти ID по имени, если введено имя
+        let referrerId = referrerInput;
+        if (referrerInput && !referrerInput.startsWith('P') && !referrerInput.startsWith('T')) { // Простая проверка, что это не ID
+             const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === referrerInput.toLowerCase());
+             if (foundPartner) {
+                 referrerId = foundPartner.id;
+             }
         }
 
         const exists = await checkPartnerExists(id);
@@ -524,79 +551,146 @@
             loadPartners();
             // Обновляем таблицы
             loadBonuses();
-            loadPayouts();
+            loadPayouts(); // <<< Обновляем таблицу выплат
         } else {
             const errorText = await response.text();
             alert('Ошибка при добавлении перекупа: ' + errorText);
         }
     }
 
-async function addDeal() {
-    const id = document.getElementById('newDealId').value;
-    const partnerInput = document.getElementById('newDealPartner').value; // Это может быть ID или Имя
-    const type = document.getElementById('newDealType').value;
-    const amount = parseFloat(document.getElementById('newDealAmount').value);
-    const dateStr = document.getElementById('newDealDate').value; // Новое поле
+    async function addDeal() {
+        const id = document.getElementById('newDealId').value;
+        const partnerInput = document.getElementById('newDealPartner').value; // Это может быть ID или Имя
+        const type = document.getElementById('newDealType').value;
+        const amount = parseFloat(document.getElementById('newDealAmount').value);
+        const dateStr = document.getElementById('newDealDate').value; // Новое поле
 
-    if (!id || !partnerInput || isNaN(amount)) {
-        alert('Заполните все поля сделки');
-        return;
+        if (!id || !partnerInput || isNaN(amount)) {
+            alert('Заполните все поля сделки');
+            return;
+        }
+
+        // Найдём ID партнёра по введённому значению (ID или Имя)
+        let partnerId = partnerInput;
+        if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
+             const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
+             if (foundPartner) {
+                 partnerId = foundPartner.id;
+             } else {
+                 alert('Перекуп с таким именем не найден');
+                 return;
+             }
+        }
+
+        const exists = await checkDealExists(id);
+        if (!exists) {
+            alert('Некорректный ID сделки');
+            return;
+        }
+
+        // Подготовим дату
+        const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
+
+        const dealData = {
+            id: id,
+            partner_id: partnerId, // <<< Отправляем только ID партнёра
+            type: type,
+            amount: amount,
+            date: date // <<< Добавляем дату
+        };
+
+        console.log("Отправляем на API:", dealData);
+
+        const response = await fetch(`${API_URL}/deal`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dealData)
+        });
+
+        console.log("Ответ от API:", response.status);
+
+        if (response.ok) {
+            alert('Сделка добавлена');
+            document.getElementById('newDealId').value = '';
+            document.getElementById('newDealPartner').value = ''; // Очистим поле (ID)
+            document.getElementById('newDealAmount').value = '';
+            document.getElementById('newDealDate').value = ''; // Очистим поле даты
+
+            console.log("Вызов loadBonuses...");
+            await loadBonuses();
+            console.log("Вызов loadPayouts...");
+            await loadPayouts(); // <<< Обновляем таблицу выплат
+            console.log("Таблицы обновлены.");
+        } else {
+            const errorText = await response.text();
+            console.error("Ошибка API:", errorText);
+            alert('Ошибка при добавлении сделки: ' + errorText);
+        }
     }
 
-    // Отправляем введённое значение как partner_id.
-    // API сам проверит, существует ли партнёр.
-    let partnerId = partnerInput; // <<< Исправлено: Убрана проверка startsWith
+    // <<< НОВОЕ: Функция для добавления выплаты >>>
+    async function addPayout() {
+        const partnerInput = document.getElementById('newPayoutPartner').value.trim();
+        const amount = parseFloat(document.getElementById('newPayoutAmount').value);
+        const dateStr = document.getElementById('newPayoutDate').value; // Новое поле
 
-    const exists = await checkDealExists(id);
-    if (!exists) {
-        alert('Некорректный ID сделки');
-        return;
+        if (!partnerInput || isNaN(amount)) {
+            alert('Заполните все поля выплаты');
+            return;
+        }
+
+        // Найдём ID партнёра по введённому значению (ID или Имя)
+        let partnerId = partnerInput;
+        if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
+             const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
+             if (foundPartner) {
+                 partnerId = foundPartner.id;
+             } else {
+                 alert('Перекуп с таким именем не найден');
+                 return;
+             }
+        }
+
+        // Подготовим дату
+        const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
+
+        const payoutData = {
+            partner_id: partnerId, // <<< Отправляем только ID партнёра
+            amount: amount,
+            date: date // <<< Добавляем дату
+        };
+
+        console.log("Отправляем на API:", payoutData);
+
+        const response = await fetch(`${API_URL}/payout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payoutData)
+        });
+
+        console.log("Ответ от API:", response.status);
+
+        if (response.ok) {
+            alert('Выплата добавлена');
+            document.getElementById('newPayoutPartner').value = ''; // Очистим поле (ID)
+            document.getElementById('newPayoutAmount').value = '';
+            document.getElementById('newPayoutDate').value = ''; // Очистим поле даты
+
+            console.log("Вызов loadPayouts...");
+            await loadPayouts(); // <<< Обновляем таблицу выплат
+            console.log("Таблица выплат обновлена.");
+        } else {
+            const errorText = await response.text();
+            console.error("Ошибка API:", errorText);
+            alert('Ошибка при добавлении выплаты: ' + errorText);
+        }
     }
-
-    // Подготовим дату
-    const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
-
-    const dealData = {
-        id: id,
-        partner_id: partnerId, // <<< Отправляем только ID партнёра
-        type: type,
-        amount: amount,
-        date: date // <<< Добавляем дату
-    };
-
-    console.log("Отправляем на API:", dealData);
-
-    const response = await fetch(`${API_URL}/deal`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dealData)
-    });
-
-    console.log("Ответ от API:", response.status);
-
-    if (response.ok) {
-        alert('Сделка добавлена');
-        document.getElementById('newDealId').value = '';
-        document.getElementById('newDealPartner').value = ''; // Очистим поле (ID)
-        document.getElementById('newDealAmount').value = '';
-        document.getElementById('newDealDate').value = ''; // Очистим поле даты
-
-        console.log("Вызов loadBonuses...");
-        await loadBonuses();
-        console.log("Вызов loadPayouts...");
-        await loadPayouts();
-        console.log("Таблицы обновлены.");
-    } else {
-        const errorText = await response.text();
-        console.error("Ошибка API:", errorText);
-        alert('Ошибка при добавлении сделки: ' + errorText);
-    }
-}
+    // <<< КОНЕЦ НОВОГО: Функция для добавления выплаты >>>
 
     async function loadBonuses() {
         console.log("loadBonuses: начало");
         const tbody = document.getElementById('bonusesBody');
-        tbody.innerHTML = '<tr><td colspan="7">Загрузка...</td></tr>'; // 7 колонок теперь
+        tbody.innerHTML = '<tr><td colspan="8">Загрузка...</td></tr>'; // 8 колонок теперь
 
         try {
             console.log("loadBonuses: отправляем запрос...");
@@ -612,35 +706,41 @@ async function addDeal() {
             if (data && data.length > 0) {
                 data.forEach(b => {
                     const row = tbody.insertRow();
-              row.insertCell(0).textContent = b.deal_id;
-row.insertCell(1).textContent = b.partner_id;
-row.insertCell(2).textContent = b.partner_name || "Неизвестный"; // <<< Добавлено
-row.insertCell(3).textContent = b.referrer_id;
-row.insertCell(4).textContent = b.level;
-// row.insertCell(5).textContent = b.type; // <<< Удалено
-row.insertCell(5).textContent = b.bonus; // <<< Сдвинуто на 1 позицию
-row.insertCell(6).textContent = b.deal_date || "Нет даты"; // <<< Без заглушки // <<< Добавлено
+                    row.insertCell(0).textContent = b.deal_id;
+                    row.insertCell(1).textContent = b.partner_id;
+                    // <<< НОВОЕ: Получаем имя партнёра по ID >>>
+                    const partner = partnersList.find(p => p.id === b.partner_id);
+                    row.insertCell(2).textContent = partner ? partner.name : "Неизвестный"; // <<< Имя партнёра
+                    // <<< КОНЕЦ НОВОГО: Получаем имя партнёра по ID >>>
+                    row.insertCell(3).textContent = b.referrer_id;
+                    row.insertCell(4).textContent = b.level;
+                    row.insertCell(5).textContent = b.type;
+                    row.insertCell(6).textContent = b.bonus;
+                    // <<< НОВОЕ: Получаем дату сделки >>>
+                    row.insertCell(7).textContent = b.deal_date || new Date().toLocaleDateString(); // <<< Дата
+                    // <<< КОНЕЦ НОВОГО: Получаем дату сделки >>>
                 });
             } else {
                 const row = tbody.insertRow();
-                row.insertCell(0).setAttribute("colspan", 7); // 7 колонок
+                row.insertCell(0).setAttribute("colspan", 8); // 8 колонок
                 row.insertCell(0).textContent = "Нет данных";
             }
             console.log("loadBonuses: таблица обновлена");
         } catch (e) {
             console.error("loadBonuses: ошибка", e);
-            tbody.innerHTML = '<tr><td colspan="7">Ошибка загрузки</td></tr>'; // 7 колонок
+            tbody.innerHTML = '<tr><td colspan="8">Ошибка загрузки</td></tr>'; // 8 колонок
         }
     }
 
+    // <<< ИЗМЕНЕНО: Обновлённая функция loadPayouts >>>
     async function loadPayouts() {
         console.log("loadPayouts: начало");
         const tbody = document.getElementById('payoutsBody');
-        tbody.innerHTML = '<tr><td colspan="3">Загрузка...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">Загрузка...</td></tr>'; // <<< 5 колонок теперь
 
         try {
             console.log("loadPayouts: отправляем запрос...");
-            const response = await fetch(`${API_URL}/payouts`);
+            const response = await fetch(`${API_URL}/payouts`); // <<< Новый маршрут
             console.log("loadPayouts: ответ получен, статус:", response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -654,25 +754,29 @@ row.insertCell(6).textContent = b.deal_date || "Нет даты"; // <<< Без 
                     const row = tbody.insertRow();
                     row.insertCell(0).textContent = p.id;
                     row.insertCell(1).textContent = p.name;
-                    row.insertCell(2).textContent = p.total;
+                    row.insertCell(2).textContent = p.total_bonuses; // <<< Общая сумма бонусов
+                    row.insertCell(3).textContent = p.paid; // <<< Выплачено
+                    row.insertCell(4).textContent = p.balance; // <<< Остаток
                 });
             } else {
                 const row = tbody.insertRow();
-                row.insertCell(0).setAttribute("colspan", 3);
+                row.insertCell(0).setAttribute("colspan", 5); // <<< 5 колонок
                 row.insertCell(0).textContent = "Нет данных";
             }
             console.log("loadPayouts: таблица обновлена");
         } catch (e) {
             console.error("loadPayouts: ошибка", e);
-            tbody.innerHTML = '<tr><td colspan="3">Ошибка загрузки</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5">Ошибка загрузки</td></tr>'; // <<< 5 колонок
         }
     }
+    // <<< КОНЕЦ ИЗМЕНЕНИЙ: Обновлённая функция loadPayouts >>>
 
     // --- НОВОЕ: Функции для статистики (БЕЗ аутентификации) ---
     async function loadUserStats() {
         const partnerInput = document.getElementById('statsPartnerInput').value.trim();
+
         if (!partnerInput) {
-            alert('Введите ID или Имя перекупа');
+            alert('Пожалуйста, введите ID или Имя перекупа.');
             return;
         }
 
@@ -681,12 +785,14 @@ row.insertCell(6).textContent = b.deal_date || "Нет даты"; // <<< Без 
         if (!partnerInput.startsWith('P') && !partnerInput.startsWith('T') && !/^\d+$/.test(partnerInput)) { // Простая проверка, что это не ID
              const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
              if (foundPartner) {
-                 partnerId = foundPartner.id; // <<< Используем ID из списка
+                 partnerId = foundPartner.id;
              } else {
                  alert('Перекуп с таким именем не найден');
                  return;
              }
         }
+
+        console.log(`Запрашиваем статистику для партнера: ${partnerId}`);
 
         try {
             const response = await fetch(`${API_URL}/deals/partner/${partnerId}`);
@@ -709,55 +815,53 @@ row.insertCell(6).textContent = b.deal_date || "Нет даты"; // <<< Без 
     }
 
     function displayUserStats(data) {
-    // 1. Отобразить ID партнера
-    document.getElementById('statsPartnerIdDisplay').textContent = data.partner_id; // <<< Исправлено
+        // 1. Отобразить ID партнера
+        document.getElementById('statsPartnerIdDisplay').textContent = `${data.partner_id} (${data.partner_name})`; // <<< Добавлено имя
+        document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
+        document.getElementById('statsTotalCommission').textContent = `${data.stats.total_commission} ₽`;
+        document.getElementById('statsTotalBonuses').textContent = `${data.stats.total_bonuses} ₽`;
+        document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
 
-    // 2. Заполнить карточки статистики
-    document.getElementById('statsTotalDeals').textContent = data.stats.total_deals;
-    document.getElementById('statsTotalCommission').textContent = data.stats.total_commission + ' ₽';
-    document.getElementById('statsTotalBonuses').textContent = data.stats.total_bonuses + ' ₽';
-    document.getElementById('statsReferralsCount').textContent = data.stats.referrals_count;
-
-    // 3. Заполнить таблицу сделок партнера
-    const dealsBody = document.getElementById('userDealsBody');
-    dealsBody.innerHTML = '';
-    if (data.deals && data.deals.length > 0) {
-        data.deals.forEach(d => {
+        // 2. Заполнить таблицу сделок партнера
+        const dealsBody = document.getElementById('userDealsBody');
+        dealsBody.innerHTML = '';
+        if (data.deals && data.deals.length > 0) {
+            data.deals.forEach(d => {
+                const row = dealsBody.insertRow();
+                row.insertCell(0).textContent = d.id;
+                row.insertCell(1).textContent = d.type;
+                row.insertCell(2).textContent = d.amount;
+                // Если API возвращает дату: row.insertCell(3).textContent = d.created_at или другое поле даты;
+            });
+        } else {
             const row = dealsBody.insertRow();
-            row.insertCell(0).textContent = d.id;
-            row.insertCell(1).textContent = d.type;
-            row.insertCell(2).textContent = d.amount;
-            // Если API возвращает дату: row.insertCell(3).textContent = d.created_at или другое поле даты;
-        });
-    } else {
-        const row = dealsBody.insertRow();
-        const cell = row.insertCell(0);
-        cell.colSpan = 3; // Количество колонок в таблице
-        cell.textContent = "У партнера нет сделок.";
-    }
+            const cell = row.insertCell(0);
+            cell.colSpan = 3; // Количество колонок в таблице
+            cell.textContent = "У партнера нет сделок.";
+        }
 
-    // 4. Заполнить таблицу бонусов за рефералов
-    const bonusesBody = document.getElementById('userBonusesBody');
-    bonusesBody.innerHTML = '';
-    if (data.bonuses_received && data.bonuses_received.length > 0) {
-        data.bonuses_received.forEach(b => {
+        // 3. Заполнить таблицу бонусов
+        const bonusesBody = document.getElementById('userBonusesBody');
+        bonusesBody.innerHTML = '';
+        if (data.bonuses_received && data.bonuses_received.length > 0) {
+            data.bonuses_received.forEach(b => {
+                const row = bonusesBody.insertRow();
+                row.insertCell(0).textContent = b.deal_id;
+                row.insertCell(1).textContent = b.partner_id; // ID перекупа, за которого начислен бонус
+                row.insertCell(2).textContent = b.level;
+                row.insertCell(3).textContent = b.bonus;
+            });
+        } else {
             const row = bonusesBody.insertRow();
-            row.insertCell(0).textContent = b.deal_id;
-            row.insertCell(1).textContent = b.partner_id; // ID перекупа, за которого начислен бонус
-            row.insertCell(2).textContent = b.level;
-            row.insertCell(3).textContent = b.bonus;
-        });
-    } else {
-        const row = bonusesBody.insertRow();
-        const cell = row.insertCell(0);
-        cell.colSpan = 4; // Количество колонок в таблице
-        cell.textContent = "Партнер не получил бонусов за рефералов.";
-    }
+            const cell = row.insertCell(0);
+            cell.colSpan = 4; // Количество колонок в таблице
+            cell.textContent = "Партнер не получил бонусов за рефералов.";
+        }
 
-    // 5. Показать секцию со статистикой
-    document.getElementById('userStatsSection').style.display = 'block';
-}
-    // --- КОНЕЦ НОВОГО ---
+        // 4. Показать секцию
+        document.getElementById('userStatsSection').style.display = 'block';
+    }
+    // --- КОНЕЦ НОВОГО: Функция для статистики ---
 
     function exportToCSV() {
         alert('Экспорт в CSV будет реализован позже через API.');
@@ -766,9 +870,9 @@ row.insertCell(6).textContent = b.deal_date || "Нет даты"; // <<< Без 
     // --- Загрузка при открытии страницы ---
     window.addEventListener('DOMContentLoaded', async () => {
         console.log("Страница загружена. Инициализация...");
-        await loadPartners(); // Загружаем список перекупов для автодополнения
+        await loadPartners(); // Загружаем список для автодополнения
         await loadBonuses();  // Загружаем бонусы
-        await loadPayouts();   // Загружаем выплаты
+        await loadPayouts();   // <<< Загружаем выплаты (новая версия)
         console.log("Инициализация завершена.");
     });
     // --- Конец загрузки ---
