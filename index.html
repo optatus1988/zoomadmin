@@ -453,7 +453,7 @@
         });
     }
 
-    async function loadPartners() {
+       async function loadPartners() {
         try {
             console.log("Загрузка списка перекупов...");
             const response = await fetch(`${API_URL}/partner`);
@@ -463,18 +463,22 @@
             const data = await response.json();
             console.log("Список перекупов загружен:", data);
             // Создаём список объектов с id и name
-            partnersList = data.map(p => ({ id: p.id, name: p.name }));
+            partnersList = data.map(p => ({ id: p.id, name: p.name })); // Храним объекты с id и name
             console.log("partnersList:", partnersList);
+            // Извлекаем значения для автодополнения (ID и Имена)
+            const autoCompleteValues = partnersList.flatMap(p => [p.id, p.name]);
             // Инициализируем автодополнение для полей
-            autocomplete(document.getElementById("newDealPartner"), partnersList);
-            autocomplete(document.getElementById("newPartnerReferrer"), partnersList);
+            autocomplete(document.getElementById("newDealPartner"), autoCompleteValues);
+            autocomplete(document.getElementById("newPartnerReferrer"), autoCompleteValues);
             // Для нового поля статистики
-            autocomplete(document.getElementById("statsPartnerInput"), partnersList);
+            autocomplete(document.getElementById("statsPartnerInput"), autoCompleteValues);
+            // <<< НОВОЕ: Для нового поля выплаты >>>
+            autocomplete(document.getElementById("newPayoutPartner"), autoCompleteValues);
+            // <<< КОНЕЦ НОВОГО: Для нового поля выплаты >>>
         } catch (e) {
             console.error("loadPartners: ошибка", e);
         }
     }
-
     // --- Код для работы с API ---
     async function checkPartnerExists(id) {
         try {
@@ -664,12 +668,12 @@ async function loadPayouts() {
         tbody.innerHTML = '';
         if (data && data.length > 0) {
             data.forEach(p => {
-                const row = tbody.insertRow();
-                row.insertCell(0).textContent = p.id;
-                row.insertCell(1).textContent = p.name;
-                row.insertCell(2).textContent = p.total_bonuses; // <<< Изменено
-                row.insertCell(3).textContent = p.paid; // <<< Новое
-                row.insertCell(4).textContent = p.balance; // <<< Новое
+// Новая логика
+row.insertCell(0).textContent = p.id;
+row.insertCell(1).textContent = p.name;
+row.insertCell(2).textContent = p.total_bonuses; // <<< Новое поле
+row.insertCell(3).textContent = p.paid; // <<< Новое поле
+row.insertCell(4).textContent = p.balance; // <<< Новое поле
             });
         } else {
             const row = tbody.insertRow();
