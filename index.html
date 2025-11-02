@@ -657,7 +657,7 @@ async function loadPayouts() {
 
     try {
         console.log("loadPayouts: отправляем запрос...");
-        const response = await fetch(`${API_URL}/payouts`); // <<< Используем новый маршрут
+        const response = await fetch(`${API_URL}/payouts`); // <<< Новый маршрут
         console.log("loadPayouts: ответ получен, статус:", response.status);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -668,12 +668,12 @@ async function loadPayouts() {
         tbody.innerHTML = '';
         if (data && data.length > 0) {
             data.forEach(p => {
-// Новая логика
-row.insertCell(0).textContent = p.id;
-row.insertCell(1).textContent = p.name;
-row.insertCell(2).textContent = p.total_bonuses; // <<< Новое поле
-row.insertCell(3).textContent = p.paid; // <<< Новое поле
-row.insertCell(4).textContent = p.balance; // <<< Новое поле
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = p.id;
+                row.insertCell(1).textContent = p.name;
+                row.insertCell(2).textContent = p.total_bonuses; // <<< Исправлено: total_bonuses
+                row.insertCell(3).textContent = p.paid; // <<< Новое: paid
+                row.insertCell(4).textContent = p.balance; // <<< Новое: balance
             });
         } else {
             const row = tbody.insertRow();
