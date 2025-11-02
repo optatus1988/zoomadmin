@@ -668,6 +668,7 @@ async function loadPayouts() {
         tbody.innerHTML = '';
         if (data && data.length > 0) {
             data.forEach(p => {
+                // <<< ИСПРАВЛЕНО: Объявляем переменную row >>>
                 const row = tbody.insertRow();
                 row.insertCell(0).textContent = p.id;
                 row.insertCell(1).textContent = p.name;
