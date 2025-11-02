@@ -245,24 +245,25 @@
         <button onclick="addDeal()">Добавить сделку</button>
     </div>
 
-    <h3>💰 Бонусы</h3>
+    <h3>💰 История сделок</h3>
     <!-- <<< Обёртка для прокрутки >>> -->
     <div class="table-scroll-wrapper">
-        <table id="bonusesTable">
-            <thead>
-                <tr>
-                    <th>ID сделки</th>
-                    <th>ID перекупа</th>
-                    <th>ID реферера</th>
-                    <th>Уровень</th>
-                    <th>Тип</th>
-                    <th>Бонус (₽)</th>
-                    <th>Дата</th> <!-- Новая колонка -->
-                </tr>
-            </thead>
-            <tbody id="bonusesBody">
-            </tbody>
-        </table>
+<table id="bonusesTable"> <!-- <<< Осталось bonusesTable для совместимости -->
+    <thead>
+        <tr>
+            <th>ID сделки</th>
+            <th>ID перекупа</th>
+            <th>Имя перекупа</th> <!-- <<< Добавлено -->
+            <th>ID реферера</th>
+            <th>Уровень</th>
+            <!-- <th>Тип</th> --> <!-- <<< Удалено -->
+            <th>Бонус (₽)</th>
+            <th>Дата</th>
+        </tr>
+    </thead>
+    <tbody id="bonusesBody">
+    </tbody>
+</table>
     </div>
 
     <h3>💳 Выплаты</h3>
@@ -608,15 +609,14 @@
             if (data && data.length > 0) {
                 data.forEach(b => {
                     const row = tbody.insertRow();
-                    row.insertCell(0).textContent = b.deal_id;
-                    row.insertCell(1).textContent = b.partner_id;
-                    row.insertCell(2).textContent = b.referrer_id;
-                    row.insertCell(3).textContent = b.level;
-                    row.insertCell(4).textContent = b.type;
-                    row.insertCell(5).textContent = b.bonus;
-                    // Пока дата берётся из даты расчёта/добавления, т.к. API не возвращает дату сделки
-                    // Если API будет возвращать дату сделки (например, b.deal_date), используйте её
-                    row.insertCell(6).textContent = new Date().toLocaleDateString(); // Заглушка
+              row.insertCell(0).textContent = b.deal_id;
+row.insertCell(1).textContent = b.partner_id;
+row.insertCell(2).textContent = b.partner_name || "Неизвестный"; // <<< Добавлено
+row.insertCell(3).textContent = b.referrer_id;
+row.insertCell(4).textContent = b.level;
+// row.insertCell(5).textContent = b.type; // <<< Удалено
+row.insertCell(5).textContent = b.bonus; // <<< Сдвинуто на 1 позицию
+row.insertCell(6).textContent = b.deal_date || new Date().toLocaleDateString(); // <<< Добавлено
                 });
             } else {
                 const row = tbody.insertRow();
