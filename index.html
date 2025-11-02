@@ -531,64 +531,75 @@
         }
     }
 
-    async function addDeal() {
-        const id = document.getElementById('newDealId').value;
-        const partnerId = document.getElementById('newDealPartner').value; // <<< Это будет ID, выбранный в автодополнении
-        const type = document.getElementById('newDealType').value;
-        const amount = parseFloat(document.getElementById('newDealAmount').value);
-        const dateStr = document.getElementById('newDealDate').value; // Новое поле
+async function addDeal() {
+    const id = document.getElementById('newDealId').value;
+    const partnerInput = document.getElementById('newDealPartner').value; // Это может быть ID или Имя
+    const type = document.getElementById('newDealType').value;
+    const amount = parseFloat(document.getElementById('newDealAmount').value);
+    const dateStr = document.getElementById('newDealDate').value; // Новое поле
 
-        if (!id || !partnerId || isNaN(amount)) {
-            alert('Заполните все поля сделки');
-            return;
-        }
-
-        const exists = await checkDealExists(id);
-        if (!exists) {
-            alert('Некорректный ID сделки');
-            return;
-        }
-
-        // Подготовим дату
-        const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
-
-        const dealData = {
-            id: id,
-            partner_id: partnerId, // <<< Отправляем только ID партнёра
-            type: type,
-            amount: amount
-            // Дата пока не передаётся в API, так как API её не хранит
-            // Но можно добавить поле в API и передавать здесь
-        };
-
-        console.log("Отправляем на API:", dealData);
-
-        const response = await fetch(`${API_URL}/deal`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dealData)
-        });
-
-        console.log("Ответ от API:", response.status);
-
-        if (response.ok) {
-            alert('Сделка добавлена');
-            document.getElementById('newDealId').value = '';
-            document.getElementById('newDealPartner').value = ''; // Очищаем поле (ID)
-            document.getElementById('newDealAmount').value = '';
-            document.getElementById('newDealDate').value = ''; // Очистим поле даты
-
-            console.log("Вызов loadBonuses...");
-            await loadBonuses();
-            console.log("Вызов loadPayouts...");
-            await loadPayouts();
-            console.log("Таблицы обновлены.");
-        } else {
-            const errorText = await response.text();
-            console.error("Ошибка API:", errorText);
-            alert('Ошибка при добавлении сделки: ' + errorText);
-        }
+    if (!id || !partnerInput || isNaN(amount)) {
+        alert('Заполните все поля сделки');
+        return;
     }
+
+    // Найдём ID партнёра по введённому значению (ID или Имя)
+    let partnerId = partnerInput;
+    if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
+         const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
+         if (foundPartner) {
+             partnerId = foundPartner.id;
+         } else {
+             alert('Перекуп с таким именем не найден');
+             return;
+         }
+    }
+
+    const exists = await checkDealExists(id);
+    if (!exists) {
+        alert('Некорректный ID сделки');
+        return;
+    }
+
+    // Подготовим дату
+    const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null; // <<< Исправлено
+
+    const dealData = {
+        id: id,
+        partner_id: partnerId,
+        type: type,
+        amount: amount,
+        date: date // <<< Добавляем дату
+    };
+
+    console.log("Отправляем на API:", dealData);
+
+    const response = await fetch(`${API_URL}/deal`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dealData)
+    });
+
+    console.log("Ответ от API:", response.status);
+
+    if (response.ok) {
+        alert('Сделка добавлена');
+        document.getElementById('newDealId').value = '';
+        document.getElementById('newDealPartner').value = ''; // Очистим поле (ID)
+        document.getElementById('newDealAmount').value = '';
+        document.getElementById('newDealDate').value = ''; // Очистим поле даты
+
+        console.log("Вызов loadBonuses...");
+        await loadBonuses();
+        console.log("Вызов loadPayouts...");
+        await loadPayouts();
+        console.log("Таблицы обновлены.");
+    } else {
+        const errorText = await response.text();
+        console.error("Ошибка API:", errorText);
+        alert('Ошибка при добавлении сделки: ' + errorText);
+    }
+}
 
     async function loadBonuses() {
         console.log("loadBonuses: начало");
