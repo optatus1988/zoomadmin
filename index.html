@@ -546,7 +546,11 @@ async function addDeal() {
     // Найдём ID партнёра по введённому значению (ID или Имя)
     let partnerId = partnerInput;
     if (partnerInput && !partnerInput.startsWith('P') && !partnerInput.startsWith('T')) { // Простая проверка, что это не ID
-         const foundPartner = partnersList.find(p => p.name && p.name.toLowerCase() === partnerInput.toLowerCase());
+         // Нормализуем введённое имя: убираем пробелы и приводим к нижнему регистру
+         const normalizedInput = partnerInput.trim().toLowerCase();
+         const foundPartner = partnersList.find(p =>
+             p.name && p.name.trim().toLowerCase() === normalizedInput
+         );
          if (foundPartner) {
              partnerId = foundPartner.id;
          } else {
@@ -562,11 +566,11 @@ async function addDeal() {
     }
 
     // Подготовим дату
-    const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null; // <<< Исправлено
+    const date = dateStr ? new Date(dateStr).toISOString().split('T')[0] : null;
 
     const dealData = {
         id: id,
-        partner_id: partnerId,
+        partner_id: partnerId, // <<< Отправляем только ID партнёра
         type: type,
         amount: amount,
         date: date // <<< Добавляем дату
@@ -585,7 +589,7 @@ async function addDeal() {
     if (response.ok) {
         alert('Сделка добавлена');
         document.getElementById('newDealId').value = '';
-        document.getElementById('newDealPartner').value = ''; // Очистим поле (ID)
+        document.getElementById('newDealPartner').value = ''; // Очищаем поле (ID)
         document.getElementById('newDealAmount').value = '';
         document.getElementById('newDealDate').value = ''; // Очистим поле даты
 
