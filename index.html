@@ -616,7 +616,7 @@ row.insertCell(3).textContent = b.referrer_id;
 row.insertCell(4).textContent = b.level;
 // row.insertCell(5).textContent = b.type; // <<< Удалено
 row.insertCell(5).textContent = b.bonus; // <<< Сдвинуто на 1 позицию
-row.insertCell(6).textContent = b.deal_date || new Date().toLocaleDateString(); // <<< Добавлено
+row.insertCell(6).textContent = b.deal_date || "Нет даты"; // <<< Без заглушки // <<< Добавлено
                 });
             } else {
                 const row = tbody.insertRow();
